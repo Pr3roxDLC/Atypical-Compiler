@@ -1,0 +1,25 @@
+main(){
+    int: x = 10 + 10 + 10;
+}
+
+module List {
+    struct {
+        int: length;
+    }
+
+    impl {
+        getInt(): int {}
+        setInt(int: i) {}
+        getAndSetInt(int: i): int {}
+    }
+}
+
+trait Cloneable {
+    clone(): obj;
+}
+
+impl Cloneable for List {
+    clone(): obj {
+        int: x = 10 + 10 +10;
+    }
+}
