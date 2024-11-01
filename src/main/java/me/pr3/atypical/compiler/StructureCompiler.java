@@ -90,6 +90,7 @@ public class StructureCompiler {
             classNode.version = Opcodes.V1_8;
             classNode.name = trimmed;
             classNode.methods = new ArrayList<>();
+            classNode.superName= "java/lang/Object";
             generatedClassNodes.put(trimmed, classNode);
         }
         MethodNode methodNode = new MethodNode(

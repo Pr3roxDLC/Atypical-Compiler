@@ -1,5 +1,7 @@
-main(){
-    int: x = 10 + 10 + 10;
+main(java.lang.String[]: args){
+    int: x = 10 + 10 * 10;
+    x = 10 - 10;
+    bool: b = 10 != 10;
 }
 
 module List {

@@ -1,10 +1,7 @@
 package me.pr3.atypical.compiler;
 
-import me.pr3.atypical.generated.AtypicalParser;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.*;
 
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
@@ -18,26 +15,126 @@ public class ExpressionCompiler {
         this.structureCompiler = structureCompiler;
     }
 
-    public InsnList compileExpression(ExpressionContext context){
+    public Result compileExpression(ExpressionContext context){
         InsnList insnList = new InsnList();
+        String resultType = "V";
         if(context.binaryExpression() != null){
-            insnList.add(compileExpression(context.left));
+            Result leftResult = compileExpression(context.left);
+            insnList.add(leftResult.insnList);
             BinaryExpressionContext binaryExpressionContext = context.binaryExpression();
             BinaryOperatorContext op = binaryExpressionContext.op;
-            insnList.add(compileExpression(binaryExpressionContext.right));
-            insnList.add(getInsnForBinaryOperator(op));
+            Result rightResult = compileExpression(binaryExpressionContext.right);
+            insnList.add(rightResult.insnList);
+            Result opResult = getInsnListForBinaryOperator(op, leftResult.returnType);
+            insnList.add(opResult.insnList);
+            resultType = opResult.returnType;
         }
         if(context.terminalExpression() != null){
             TerminalExpressionContext terminalExpressionContext = context.terminalExpression();
             int value = Integer.parseInt(terminalExpressionContext.literal().getText());
             insnList.add(new IntInsnNode(Opcodes.BIPUSH, value));
+            resultType = "I";
         }
-        return insnList;
+        return new Result(insnList, resultType);
     }
 
-    public InsnNode getInsnForBinaryOperator(BinaryOperatorContext operator){
-        if(operator.ADD() != null)return new InsnNode(Opcodes.IADD);
-        return null;
+    public Result getInsnListForBinaryOperator(BinaryOperatorContext operator, String type){
+        if(operator.ADD() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){{add(new InsnNode(Opcodes.IADD));}}, "I");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.MUL() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){{add(new InsnNode(Opcodes.IMUL));}}, "I");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.SUB() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){{add(new InsnNode(Opcodes.ISUB));}}, "I");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.DIV() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){{add(new InsnNode(Opcodes.IDIV));}}, "I");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.CMPEQ() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){
+                    {
+                        LabelNode trueLabel = new LabelNode();
+                        LabelNode falseLabel = new LabelNode();
+                        add(new JumpInsnNode(Opcodes.IF_ICMPEQ, trueLabel));
+                        add(new InsnNode(Opcodes.ICONST_0));
+                        add(new JumpInsnNode(Opcodes.GOTO, falseLabel));
+                        add(trueLabel);
+                        add(new InsnNode(Opcodes.ICONST_1));
+                        add(falseLabel);
+                    }
+                }, "Z");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.CMPNE() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){
+                    {
+                        LabelNode trueLabel = new LabelNode();
+                        LabelNode falseLabel = new LabelNode();
+                        add(new JumpInsnNode(Opcodes.IF_ICMPNE, trueLabel));
+                        add(new InsnNode(Opcodes.ICONST_0));
+                        add(new JumpInsnNode(Opcodes.GOTO, falseLabel));
+                        add(trueLabel);
+                        add(new InsnNode(Opcodes.ICONST_1));
+                        add(falseLabel);
+                    }
+                }, "Z");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.CMPGT() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){
+                    {
+                        LabelNode trueLabel = new LabelNode();
+                        LabelNode falseLabel = new LabelNode();
+                        add(new JumpInsnNode(Opcodes.IF_ICMPGT, trueLabel));
+                        add(new InsnNode(Opcodes.ICONST_0));
+                        add(new JumpInsnNode(Opcodes.GOTO, falseLabel));
+                        add(trueLabel);
+                        add(new InsnNode(Opcodes.ICONST_1));
+                        add(falseLabel);
+                    }
+                }, "Z");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        if(operator.CMPLT() != null){
+            return switch (type) {
+                case "I" -> new Result(new InsnList(){
+                    {
+                        LabelNode trueLabel = new LabelNode();
+                        LabelNode falseLabel = new LabelNode();
+                        add(new JumpInsnNode(Opcodes.IF_ICMPLT, trueLabel));
+                        add(new InsnNode(Opcodes.ICONST_0));
+                        add(new JumpInsnNode(Opcodes.GOTO, falseLabel));
+                        add(trueLabel);
+                        add(new InsnNode(Opcodes.ICONST_1));
+                        add(falseLabel);
+
+                    }
+                }, "Z");
+                default -> throw new IllegalArgumentException("");
+            };
+        }
+        throw new IllegalStateException("Unable to resolve binary operator instructions for op: "
+                + operator.getText() + " for type: " + type);
     }
 
+    public record Result(InsnList insnList, String returnType){}
 }
