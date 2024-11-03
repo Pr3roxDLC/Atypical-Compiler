@@ -1,15 +1,16 @@
-main(java.lang.String[]: args){
+import java.lang.String as String;
+import java.lang.System as System;
+import java.io.PrintStream as PS;
+
+main(String[]: args){
     int: x = 10 + 10;
-    Input.otherMethod(x);
+    System.out.println("HelloWorld");
 }
 
-otherMethod(int: i){
-
-}
 
 module List {
     struct {
-        int: length;
+        int[]: content;
     }
 
     impl {

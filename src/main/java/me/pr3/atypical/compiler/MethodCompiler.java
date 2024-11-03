@@ -21,14 +21,16 @@ public class MethodCompiler {
     MethodNode methodNode = null;
     LabelNode startLabel = new LabelNode();
     LabelNode endLabel = new LabelNode();
+    String fileName = "";
     public MethodCompiler(StructureCompiler parent){
         this.structureCompiler = parent;
     }
-    public void compileMethod(String key, MethodImplementationContext value) {
-        ClassNode node = structureCompiler.generatedClassNodes.get(key.replace(".atp", ""));
-        this.methodNode = ClassNodeUtil.getNodeByNameAndDescriptor(node,
+    public void compileMethod(String fileName, MethodImplementationContext value) {
+        this.fileName = fileName;
+        ClassNode node = structureCompiler.generatedClassNodes.get(fileName.replace(".atp", ""));
+        this.methodNode = ClassNodeUtil.getMethodNodeByNameAndDescriptor(node,
                 value.methodSignature().memberName().getText(),
-                TypeUtil.extractMethodDescriptor(value.methodSignature()));
+                TypeUtil.extractMethodDescriptor(value.methodSignature(), structureCompiler.imports.get(fileName)));
         methodNode.instructions.add(startLabel);
         StatementCompiler statementCompiler = new StatementCompiler(structureCompiler, this);
         for (StatementContext statementContext : value.statement()) {
@@ -59,6 +61,10 @@ public class MethodCompiler {
     }
     public int getLocalVarIndexByName(String name){
         return localVarNameMapping.get(name);
+    }
+
+    public String fullyQualifyType(String type){
+        return structureCompiler.imports.get(this.fileName).getOrDefault(type, type);
     }
 
 }

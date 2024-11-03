@@ -1,5 +1,6 @@
 package me.pr3.atypical.compiler.util;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static me.pr3.atypical.generated.AtypicalParser.*;
@@ -10,6 +11,10 @@ import static me.pr3.atypical.generated.AtypicalParser.*;
 public class TypeUtil {
     public static String toDesc(String type) {
         return mapArrayType(type);
+    }
+
+    public static String toDesc(String type, Map<String, String> importMapping) {
+        return mapArrayType(type, importMapping);
     }
 
     public static String extractClassFromType(String type){
@@ -44,6 +49,17 @@ public class TypeUtil {
         return output.append(mapTypeToJVMType(temp)).toString();
     }
 
+    private static String mapArrayType(String type, Map<String, String> importMapping){
+        StringBuilder output = new StringBuilder();
+        String temp  = type.replace(".", "/");
+        while(temp.endsWith("[]")){
+            temp = temp.substring(0, temp.length() - 2);
+            output.append("[");
+        }
+        temp = importMapping.getOrDefault(temp, temp);
+        return output.append(mapTypeToJVMType(temp)).toString();
+    }
+
     private static String mapTypeToJVMType(String type){
         return switch (type){
             case "int" -> "I";
@@ -55,13 +71,15 @@ public class TypeUtil {
     }
 
 
-    public static String extractMethodDescriptor(MethodSignatureContext context) {
+    public static String extractMethodDescriptor(MethodSignatureContext context, Map<String, String> importMapping) {
         String parameterTypes = context.parameterDeclaration().stream()
                 .map(c -> c.typeName().getText())
-                .map(TypeUtil::toDesc)
+                .map(t -> toDesc(t, importMapping))
                 .collect(Collectors.joining());
         if(context.methodReturnTypeDeclaration() != null){
-            return "(" + parameterTypes + ")" + mapTypeToJVMType(context.methodReturnTypeDeclaration().typeName().getText());
+            String returnType = context.methodReturnTypeDeclaration().typeName().getText();
+            String fullyQualifiedReturnType = importMapping.getOrDefault(returnType, returnType);
+            return "(" + parameterTypes + ")" + mapTypeToJVMType(fullyQualifiedReturnType);
         }else {
             return "(" + parameterTypes + ")V";
         }

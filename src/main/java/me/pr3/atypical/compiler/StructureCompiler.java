@@ -22,18 +22,21 @@ import static me.pr3.atypical.generated.AtypicalParser.*;
 public class StructureCompiler {
 
     //Input
-    Map<String, String> inputFiles;
+    public Map<String, String> inputFiles;
 
     //Intermediate
-    Set<ModuleDeclarationContext> modules = new HashSet<>();
-    Set<TraitDeclarationContext> traits = new HashSet<>();
-    Set<ImplDeclarationContext> impls = new HashSet<>();
-    Map<String, List<MethodImplementationContext>> globalMethods = new HashMap<>();
+    public Map<String, Set<ModuleDeclarationContext>> modules = new HashMap<>();
+    public Map<String, Set<TraitDeclarationContext>> traits = new HashMap<>();
+    public Map<String, Set<ImplDeclarationContext>> impls = new HashMap<>();
+    public Map<String, List<MethodImplementationContext>> globalMethods = new HashMap<>();
+
+    //Map<File, Map<ImportedClass, Alias>>
+    public Map<String, Map<String, String>> imports = new HashMap<>();
 
     //Output
-    Map<String, ClassNode> generatedClassNodes = new HashMap<>();
+    public Map<String, ClassNode> generatedClassNodes = new HashMap<>();
 
-    Map<String, byte[]> generatedClasses = new HashMap<>();
+    public Map<String, byte[]> generatedClasses = new HashMap<>();
 
     public StructureCompiler(Map<String, String> files) {
         this.inputFiles = files;
@@ -46,16 +49,22 @@ public class StructureCompiler {
             parseSingleFile(inputFile.getKey(), inputFile.getValue());
         }
 
-        for (ModuleDeclarationContext module : modules) {
-            generateClassNodeFromModule(module);
+        for (Entry<String, Set<ModuleDeclarationContext>> entry : modules.entrySet()) {
+            for (ModuleDeclarationContext module : entry.getValue()) {
+                generateClassNodeFromModule(module, entry.getKey());
+            }
         }
 
-        for (TraitDeclarationContext trait : traits) {
-            generateInterfaceFromTrait(trait);
+        for (Entry<String, Set<TraitDeclarationContext>> entry : traits.entrySet()) {
+            for (TraitDeclarationContext trait : entry.getValue()) {
+                generateInterfaceFromTrait(trait, entry.getKey());
+            }
         }
 
-        for (ImplDeclarationContext impl : impls) {
-            generateClassFromImpl(impl);
+        for (Entry<String, Set<ImplDeclarationContext>> entry : impls.entrySet()) {
+            for (ImplDeclarationContext impl : entry.getValue()) {
+                generateClassFromImpl(impl, entry.getKey());
+            }
         }
 
         for (Entry<String, List<MethodImplementationContext>> globalMethodsForFile : globalMethods.entrySet()) {
@@ -101,7 +110,7 @@ public class StructureCompiler {
         MethodNode methodNode = new MethodNode(
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                 method.methodSignature().memberName().getText(),
-                TypeUtil.extractMethodDescriptor(method.methodSignature()),
+                TypeUtil.extractMethodDescriptor(method.methodSignature(), imports.get(className)),
                 null,
                 new String[]{}
         );
@@ -109,7 +118,7 @@ public class StructureCompiler {
 
     }
 
-    private void generateClassFromImpl(ImplDeclarationContext context){
+    private void generateClassFromImpl(ImplDeclarationContext context, String fileName){
         String className = context.struct.getText() + "$" + context.itf.getText();
 
         ClassNode classNode = new ClassNode();
@@ -121,7 +130,7 @@ public class StructureCompiler {
 
         for (ImplMemberDeclarationContext member : context.implMemberDeclaration()) {
             MethodSignatureContext signature = member.methodImplementation().methodSignature();
-            String desc = TypeUtil.extractMethodDescriptor(signature);
+            String desc = TypeUtil.extractMethodDescriptor(signature, imports.get(fileName));
             MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, signature.memberName().getText(), desc, null, null);
             classNode.methods.add(methodNode);
         }
@@ -129,7 +138,7 @@ public class StructureCompiler {
         generatedClassNodes.put(className, classNode);
     }
 
-    private void generateInterfaceFromTrait(TraitDeclarationContext context){
+    private void generateInterfaceFromTrait(TraitDeclarationContext context, String fileName){
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE;
         classNode.version = Opcodes.V1_8;
@@ -138,14 +147,14 @@ public class StructureCompiler {
 
         for (TraitMemberDeclarationContext member : context.traitMemberDeclaration()) {
             MethodSignatureContext signature = member.methodDeclaration().methodSignature();
-            String desc = TypeUtil.extractMethodDescriptor(signature);
+            String desc = TypeUtil.extractMethodDescriptor(signature, imports.get(fileName));
             classNode.methods.add(new MethodNode(Opcodes.ACC_ABSTRACT, signature.memberName().getText(), desc, null, null));
         }
 
         generatedClassNodes.put(context.typeName().getText(), classNode);
     }
 
-    private void generateClassNodeFromModule(ModuleDeclarationContext moduleDeclarationContext) {
+    private void generateClassNodeFromModule(ModuleDeclarationContext moduleDeclarationContext, String fileName) {
         String typeName = moduleDeclarationContext.typeName().getText();
 
         ClassNode classNode = new ClassNode();
@@ -174,7 +183,7 @@ public class StructureCompiler {
                     MethodNode methodNode = new MethodNode(
                             Opcodes.ACC_PUBLIC,
                             method.methodSignature().memberName().getText(),
-                            TypeUtil.extractMethodDescriptor(method.methodSignature()),
+                            TypeUtil.extractMethodDescriptor(method.methodSignature(), imports.get(fileName)),
                             null,
                             new String[]{}
                     );
@@ -195,10 +204,20 @@ public class StructureCompiler {
         AtypicalParser parser = new AtypicalParser(tokens);
         FileContext fileContext = parser.file();
 
+        for (ImportedClassContext importedClass : fileContext.imports().importedClass()) {
+            if(!imports.containsKey(fileName)) {
+                imports.put(fileName, new HashMap<>(Map.of(importedClass.alias.getText(), importedClass.class_.getText().replace(".", "/"))));
+            }else {
+                imports.get(fileName).put(importedClass.alias.getText(), importedClass.class_.getText().replace(".", "/"));
+            }
+        }
+        this.modules.put(fileName, new HashSet<>());
+        this.traits.put(fileName, new HashSet<>());
+        this.impls.put(fileName, new HashSet<>());
         for (FileMemberContext fileMemberContext : fileContext.fileMember()) {
-            if(fileMemberContext.moduleDeclaration() != null)this.modules.add(fileMemberContext.moduleDeclaration());
-            if(fileMemberContext.traitDeclaration() != null)this.traits.add(fileMemberContext.traitDeclaration());
-            if(fileMemberContext.implDeclaration() != null)this.impls.add(fileMemberContext.implDeclaration());
+            if(fileMemberContext.moduleDeclaration() != null)this.modules.get(fileName).add(fileMemberContext.moduleDeclaration());
+            if(fileMemberContext.traitDeclaration() != null)this.traits.get(fileName).add(fileMemberContext.traitDeclaration());
+            if(fileMemberContext.implDeclaration() != null)this.impls.get(fileName).add(fileMemberContext.implDeclaration());
 
             if(fileMemberContext.methodImplementation() != null) {
                 if(globalMethods.containsKey(fileName)){

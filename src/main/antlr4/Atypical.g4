@@ -1,9 +1,12 @@
 grammar Atypical;
 
-file: fileMember* EOF;
+file: imports fileMember* EOF;
 
 fileMember: moduleDeclaration | implDeclaration | traitDeclaration | structDeclaration | methodImplementation;
 
+//Imports
+imports: importedClass*;
+importedClass: IMPORT class=typeName AS alias=typeName SEMICOLON;
 
 //Module
 moduleDeclaration: MODULE typeName LBRACE moduleMemberDeclaration* RBRACE;
@@ -56,7 +59,8 @@ argList: expression (COMMA expression)*;
 binaryExpression: op=binaryOperator right=expression;
 unaryExpression: unaryOperator right = expression;
 terminalExpression: literal | memberOrVariableName;
-literal: NUMBER;
+literal: NUMBER | SINGLE_QUOTE string? SINGLE_QUOTE | DOUBLE_QUOTE string? DOUBLE_QUOTE;
+string: LETTER;
 
 
 //Operators
@@ -77,6 +81,8 @@ STRUCT: 'struct';
 TRAIT: 'trait';
 IMPL: 'impl';
 FOR: 'for';
+IMPORT: 'import';
+AS: 'as';
 
 //Reserved Chars
 LBRACE: '{';
@@ -88,6 +94,8 @@ SEMICOLON: ';';
 ARRAY_TYPE: '[]';
 COMMA: ',';
 DOT: '.';
+SINGLE_QUOTE: '\'';
+DOUBLE_QUOTE: '"';
 
 //Operator
 ADD: '+';
