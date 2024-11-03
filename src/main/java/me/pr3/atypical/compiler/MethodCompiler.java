@@ -53,6 +53,10 @@ public class MethodCompiler {
     public String getLocalVarTypeByName(String name){
         return localVars.get(localVarNameMapping.get(name));
     }
+
+    public boolean containsLocalVarWithName(String name){
+        return localVarNameMapping.containsKey(name);
+    }
     public int getLocalVarIndexByName(String name){
         return localVarNameMapping.get(name);
     }

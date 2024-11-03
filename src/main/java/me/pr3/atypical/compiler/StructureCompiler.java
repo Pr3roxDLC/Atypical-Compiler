@@ -28,7 +28,7 @@ public class StructureCompiler {
     Set<ModuleDeclarationContext> modules = new HashSet<>();
     Set<TraitDeclarationContext> traits = new HashSet<>();
     Set<ImplDeclarationContext> impls = new HashSet<>();
-    Map<String, MethodImplementationContext> globalMethods = new HashMap<>();
+    Map<String, List<MethodImplementationContext>> globalMethods = new HashMap<>();
 
     //Output
     Map<String, ClassNode> generatedClassNodes = new HashMap<>();
@@ -58,13 +58,18 @@ public class StructureCompiler {
             generateClassFromImpl(impl);
         }
 
-        for (Entry<String, MethodImplementationContext> globalMethod : globalMethods.entrySet()) {
-            generateOrAddToClassForGlobalMethod(globalMethod.getKey(), globalMethod.getValue());
+        for (Entry<String, List<MethodImplementationContext>> globalMethodsForFile : globalMethods.entrySet()) {
+            for (MethodImplementationContext methodImplementationContext : globalMethodsForFile.getValue()) {
+                generateOrAddToClassForGlobalMethod(globalMethodsForFile.getKey(), methodImplementationContext);
+
+            }
         }
 
-        for (Entry<String, MethodImplementationContext> entry : globalMethods.entrySet()) {
-            MethodCompiler methodCompiler = new MethodCompiler(this);
-            methodCompiler.compileMethod(entry.getKey(), entry.getValue());
+        for (Entry<String, List<MethodImplementationContext>> entry : globalMethods.entrySet()) {
+            for (MethodImplementationContext methodImplementationContext : entry.getValue()) {
+                MethodCompiler methodCompiler = new MethodCompiler(this);
+                methodCompiler.compileMethod(entry.getKey(), methodImplementationContext);
+            }
         }
 
         for (Map.Entry<String, ClassNode> entry : generatedClassNodes.entrySet()) {
@@ -195,7 +200,13 @@ public class StructureCompiler {
             if(fileMemberContext.traitDeclaration() != null)this.traits.add(fileMemberContext.traitDeclaration());
             if(fileMemberContext.implDeclaration() != null)this.impls.add(fileMemberContext.implDeclaration());
 
-            if(fileMemberContext.methodImplementation() != null)this.globalMethods.put(fileName, fileMemberContext.methodImplementation());
+            if(fileMemberContext.methodImplementation() != null) {
+                if(globalMethods.containsKey(fileName)){
+                    this.globalMethods.get(fileName).add(fileMemberContext.methodImplementation());
+                }else {
+                    this.globalMethods.put(fileName, new ArrayList<>(List.of(fileMemberContext.methodImplementation())));
+                }
+            }
         }
 
     }

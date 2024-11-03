@@ -44,11 +44,18 @@ asignLocalVariableStatement: variableName ASIGN expression;
 expression:
       unaryExpression
     | left=expression binaryExpression
-    | terminalExpression;
+    | terminalExpression
+    | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
+    | memberAccessExpression;                       //things like "abc".replace();
 
+memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;
+primaryMemberAccess: fieldAccessExpression | methodInvocationExpression;
+fieldAccessExpression: memberName;
+methodInvocationExpression: memberName LPAREN argList?  RPAREN;
+argList: expression (COMMA expression)*;
 binaryExpression: op=binaryOperator right=expression;
 unaryExpression: unaryOperator right = expression;
-terminalExpression: variableName | literal;
+terminalExpression: literal | memberOrVariableName;
 literal: NUMBER;
 
 
@@ -62,6 +69,7 @@ typeName: identifier ('.' identifier)* ARRAY_TYPE?;
 identifier: LETTER LETTER_OR_DIGIT*;
 memberName: LETTER LETTER_OR_DIGIT*;
 variableName: LETTER LETTER_OR_DIGIT*;
+memberOrVariableName: LETTER LETTER_OR_DIGIT*;
 
 //Keywords
 MODULE: 'module';
@@ -78,6 +86,8 @@ RPAREN: ')';
 COLON: ':';
 SEMICOLON: ';';
 ARRAY_TYPE: '[]';
+COMMA: ',';
+DOT: '.';
 
 //Operator
 ADD: '+';

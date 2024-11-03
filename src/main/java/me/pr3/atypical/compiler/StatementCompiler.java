@@ -3,6 +3,7 @@ package me.pr3.atypical.compiler;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import static me.pr3.atypical.compiler.ExpressionCompiler.*;
@@ -36,6 +37,14 @@ public class StatementCompiler {
             Result expressionResult = compiler.compileExpression(alvs.expression());
             insnList.add(expressionResult.insnList());
             insnList.add(new VarInsnNode(Opcodes.ISTORE, localVarIndex));
+        }
+        if(context.expression() != null){
+            ExpressionContext expression = context.expression();
+            Result expressionResult = compiler.compileExpression(expression);
+            insnList.add(expressionResult.insnList());
+            if(!expressionResult.returnType().equals("V")){
+                insnList.add(new InsnNode(Opcodes.POP));
+            }
         }
         return insnList;
     }

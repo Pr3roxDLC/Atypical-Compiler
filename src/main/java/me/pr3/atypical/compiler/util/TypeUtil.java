@@ -12,6 +12,28 @@ public class TypeUtil {
         return mapArrayType(type);
     }
 
+    public static String extractClassFromType(String type){
+        if(!type.startsWith("L") || !type.endsWith(";")){
+            throw new IllegalArgumentException("Unable to extract class from type: " + type);
+        }
+        return type.substring(1).replace(";", "");
+    }
+
+    public static String toTypePrefixed(String desc){
+        return "T" + desc;
+    }
+
+    public static boolean isTypePrefixedDesc(String desc){
+        return desc.startsWith("T");
+    }
+
+    public static String fromTypePrefixed(String typePrefixedDesc){
+        if(typePrefixedDesc.startsWith("T")){
+            return typePrefixedDesc.substring(1);
+        }
+        throw new IllegalArgumentException("Type: " + typePrefixedDesc + "no prefixed with T indicating this being a type placeholder");
+    }
+
     private static String mapArrayType(String type){
         StringBuilder output = new StringBuilder();
         String temp  = type.replace(".", "/");

@@ -1,7 +1,10 @@
 main(java.lang.String[]: args){
-    int: x = 10 + 10 * 10;
-    x = 10 - 10;
-    bool: b = 10 != 10;
+    int: x = 10 + 10;
+    Input.otherMethod(x);
+}
+
+otherMethod(int: i){
+
 }
 
 module List {
