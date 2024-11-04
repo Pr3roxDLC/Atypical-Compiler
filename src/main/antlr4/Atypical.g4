@@ -39,9 +39,11 @@ parameterDeclaration: typeName COLON memberName;
 //Statements
 statement: localVariableDeclarationExpression SEMICOLON
     | asignLocalVariableStatement SEMICOLON
-    | expression SEMICOLON;
+    | expression SEMICOLON
+    | returnStatement SEMICOLON;
 localVariableDeclarationExpression: typeName COLON variableName ASIGN expression;
 asignLocalVariableStatement: variableName ASIGN expression;
+returnStatement: RETURN expression?;
 
 //Expression
 expression:
@@ -87,6 +89,7 @@ IMPL: 'impl';
 FOR: 'for';
 IMPORT: 'import';
 AS: 'as';
+RETURN: 'return';
 
 //Reserved Chars
 LBRACE: '{';

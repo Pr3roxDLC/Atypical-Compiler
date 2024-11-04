@@ -70,7 +70,21 @@ public class StructureCompiler {
         for (Entry<String, List<MethodImplementationContext>> globalMethodsForFile : globalMethods.entrySet()) {
             for (MethodImplementationContext methodImplementationContext : globalMethodsForFile.getValue()) {
                 generateOrAddToClassForGlobalMethod(globalMethodsForFile.getKey(), methodImplementationContext);
+            }
+        }
 
+        for (Entry<String, Set<ModuleDeclarationContext>> entry : modules.entrySet()) {
+            for (ModuleDeclarationContext moduleDeclarationContext : entry.getValue()) {
+                String moduleName = moduleDeclarationContext.typeName().getText();
+                for (ModuleMemberDeclarationContext moduleMemberDeclaration : moduleDeclarationContext.moduleMemberDeclaration()) {
+                    if(moduleMemberDeclaration.moduleSelfImplDeclaration() != null){
+                        ModuleSelfImplDeclarationContext moduleSelfImplDeclaration = moduleMemberDeclaration.moduleSelfImplDeclaration();
+                        for (ImplMemberDeclarationContext implMember : moduleSelfImplDeclaration.implMemberDeclaration()) {
+                            MethodCompiler methodCompiler = new MethodCompiler(this);
+                            methodCompiler.compileMethod(entry.getKey(), implMember.methodImplementation(), moduleName);
+                        }
+                    }
+                }
             }
         }
 

@@ -4,19 +4,28 @@ import java.io.PrintStream as PS;
 import java.lang.CharSequence as CS;
 
 main(String[]: args){
-    System.out.println("helloWorld".replace((CS)"h", (CS)"H"));
+    System.out.println(Input.otherMethod().replace((CS)"h", (CS)"H"));
+}
+
+otherMethod(): String {
+    return "HelloWorld";
 }
 
 
 module List {
     struct {
-        int[]: content;
+        int: x;
     }
 
     impl {
-        getInt(): int {}
+        getInt(): int {
+            int: x = 10 + 10;
+            return x;
+        }
         setInt(int: i) {}
-        getAndSetInt(int: i): int {}
+        getAndSetInt(int: i): int {
+            return 100;
+        }
     }
 }
 

@@ -26,21 +26,26 @@ public class MethodCompiler {
         this.structureCompiler = parent;
     }
     public void compileMethod(String fileName, MethodImplementationContext value) {
+        compileMethod(fileName, value, fileName.replace(".atp", ""));
+    }
+
+    public void compileMethod(String fileName, MethodImplementationContext value, String className) {
         this.fileName = fileName;
-        ClassNode node = structureCompiler.generatedClassNodes.get(fileName.replace(".atp", ""));
+        ClassNode node = structureCompiler.generatedClassNodes.get(className);
         this.methodNode = ClassNodeUtil.getMethodNodeByNameAndDescriptor(node,
                 value.methodSignature().memberName().getText(),
                 TypeUtil.extractMethodDescriptor(value.methodSignature(), structureCompiler.imports.get(fileName)));
         methodNode.instructions.add(startLabel);
         StatementCompiler statementCompiler = new StatementCompiler(structureCompiler, this);
         for (StatementContext statementContext : value.statement()) {
-          methodNode.instructions.add(statementCompiler.compileStatement(statementContext));
+            methodNode.instructions.add(statementCompiler.compileStatement(statementContext));
         }
         methodNode.instructions.add(new InsnNode(Opcodes.RETURN));
         methodNode.instructions.add(endLabel);
     }
 
-    public int addLocalVar(String type, String name){
+
+        public int addLocalVar(String type, String name){
         localVars.add(type);
         int index = localVars.size() - 1;
         localVarNameMapping.put(name, index);

@@ -15,15 +15,16 @@ import static me.pr3.atypical.generated.AtypicalParser.*;
 public class StatementCompiler {
     StructureCompiler structureCompiler;
     MethodCompiler methodCompiler;
-    public StatementCompiler(StructureCompiler structureCompiler, MethodCompiler methodCompiler){
+
+    public StatementCompiler(StructureCompiler structureCompiler, MethodCompiler methodCompiler) {
         this.structureCompiler = structureCompiler;
         this.methodCompiler = methodCompiler;
     }
 
-    public InsnList compileStatement(StatementContext context){
+    public InsnList compileStatement(StatementContext context) {
         InsnList insnList = new InsnList();
         ExpressionCompiler compiler = new ExpressionCompiler(structureCompiler, methodCompiler);
-        if(context.localVariableDeclarationExpression() != null){
+        if (context.localVariableDeclarationExpression() != null) {
             LocalVariableDeclarationExpressionContext lvde = context.localVariableDeclarationExpression();
             String fullyQualifiedLocalVarType = methodCompiler.fullyQualifyType(lvde.typeName().getText());
             String localVarType = TypeUtil.toDesc(fullyQualifiedLocalVarType);
@@ -32,21 +33,39 @@ public class StatementCompiler {
             int localVarIndex = methodCompiler.addLocalVar(localVarType, lvde.variableName().getText());
             insnList.add(new VarInsnNode(Opcodes.ISTORE, localVarIndex));
         }
-        if(context.asignLocalVariableStatement() != null){
+        if (context.asignLocalVariableStatement() != null) {
             AsignLocalVariableStatementContext alvs = context.asignLocalVariableStatement();
             int localVarIndex = methodCompiler.getLocalVarIndexByName(alvs.variableName().getText());
             Result expressionResult = compiler.compileExpression(alvs.expression());
             insnList.add(expressionResult.insnList());
             insnList.add(new VarInsnNode(Opcodes.ISTORE, localVarIndex));
         }
-        if(context.expression() != null){
+        if (context.expression() != null) {
             ExpressionContext expression = context.expression();
             Result expressionResult = compiler.compileExpression(expression);
             insnList.add(expressionResult.insnList());
-            if(!expressionResult.returnType().equals("V")){
+            if (!expressionResult.returnType().equals("V")) {
                 insnList.add(new InsnNode(Opcodes.POP));
             }
         }
+        if (context.returnStatement() != null) {
+            ReturnStatementContext returnStatement = context.returnStatement();
+            if (returnStatement.expression() != null) {
+                Result expressionResult = compiler.compileExpression(returnStatement.expression());
+                insnList.add(expressionResult.insnList());
+                insnList.add(new InsnNode(getReturnInstructionForType(expressionResult.returnType())));
+            } else {
+                insnList.add(new InsnNode(Opcodes.RETURN));
+            }
+        }
         return insnList;
+    }
+
+    private int getReturnInstructionForType(String returnType) {
+        return switch (returnType) {
+            case "I", "Z" -> Opcodes.IRETURN;
+            case "V" -> Opcodes.RETURN;
+            default -> Opcodes.ARETURN;
+        };
     }
 }
