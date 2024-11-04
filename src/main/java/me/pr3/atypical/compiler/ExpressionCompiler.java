@@ -62,74 +62,16 @@ public class ExpressionCompiler {
             }
         }
         if (context.memberAccessExpression() != null) {
-            MemberAccessExpressionContext memberAccessExpression = context.memberAccessExpression();
-            ExpressionContext expression = context.expression();
-            Result expressionResult = compileExpression(expression);
-            if (TypeUtil.isTypePrefixedDesc(expressionResult.returnType)) {
-                //Expression evaluated to a Type prefixed descriptor, this means that we will invoke or access a static
-                // member on this type;
-                String staticType = TypeUtil.fromTypePrefixed(expressionResult.returnType);
-                String lastType = staticType;
-                for (ParseTree child : memberAccessExpression.children) {
-                    //Primary access is special because and is more complex than the rest of the chain
-                    if (child instanceof PrimaryMemberAccessContext primaryMemberAccessContext) {
-                        if (primaryMemberAccessContext.methodInvocationExpression() != null) {
-                            MethodInvocationExpressionContext methodInvocationExpression = primaryMemberAccessContext.methodInvocationExpression();
-                            String methodName = methodInvocationExpression.memberName().getText();
-                            StringBuilder desc = new StringBuilder();
-                            if (methodInvocationExpression.argList() != null) {
-                                for (ExpressionContext argExpression : methodInvocationExpression.argList().expression()) {
-                                    Result argExpressionResult = compileExpression(argExpression);
-                                    insnList.add(argExpressionResult.insnList);
-                                    desc.append(argExpressionResult.returnType);
-                                }
-                            }
-                            String owner = TypeUtil.extractClassFromType(staticType);
-                            String importMappedOwner = methodCompiler.fullyQualifyType(owner);
-                            ClassNode owningClassNode = structureCompiler.generatedClassNodes.getOrDefault(importMappedOwner, ClassNodeUtil.loadClassNodeFromJDKCLasses(importMappedOwner));
-                            MethodNode invokedMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
-                                    owningClassNode,
-                                    methodName,
-                                    desc.toString());
-                            insnList.add(new MethodInsnNode(Opcodes.INVOKESTATIC, owner, invokedMethod.name, invokedMethod.desc));
-                            resultType = Type.getMethodType(invokedMethod.desc).getReturnType().toString();
-                            lastType = resultType;
-                        }
-                        if(primaryMemberAccessContext.fieldAccessExpression() != null) {
-                            FieldAccessExpressionContext fieldAccessExpression = primaryMemberAccessContext.fieldAccessExpression();
-                            String fieldName = fieldAccessExpression.memberName().getText();
-                            String owner = TypeUtil.extractClassFromType(staticType);
-                            String importMappedOwner = methodCompiler.fullyQualifyType(owner);
-                            ClassNode owningClassNode = structureCompiler.generatedClassNodes.getOrDefault(importMappedOwner, ClassNodeUtil.loadClassNodeFromJDKCLasses(importMappedOwner));
-                            FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(owningClassNode, fieldName);
-                            insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, importMappedOwner, fieldName, fieldNode.desc));
-                            resultType = fieldNode.desc;
-                            lastType = resultType;
-                        }
-                    }
-                    if(child instanceof MethodInvocationExpressionContext methodInvocationExpression){
-                        String methodName = methodInvocationExpression.memberName().getText();
-                        StringBuilder desc = new StringBuilder();
-                        if (methodInvocationExpression.argList() != null) {
-                            for (ExpressionContext argExpression : methodInvocationExpression.argList().expression()) {
-                                Result argExpressionResult = compileExpression(argExpression);
-                                insnList.add(argExpressionResult.insnList);
-                                desc.append(argExpressionResult.returnType);
-                            }
-                        }
-                        String owner = TypeUtil.extractClassFromType(lastType);
-                        String importMappedOwner = methodCompiler.fullyQualifyType(owner);
-                        ClassNode owningClassNode = structureCompiler.generatedClassNodes.getOrDefault(importMappedOwner, ClassNodeUtil.loadClassNodeFromJDKCLasses(importMappedOwner));
-                        MethodNode invokedMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
-                                owningClassNode,
-                                methodName,
-                                desc.toString());
-                        insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, owner, invokedMethod.name, invokedMethod.desc));
-                        resultType = Type.getMethodType(invokedMethod.desc).getReturnType().toString();
-                        lastType = resultType;
-                    }
-                }
-            }
+            MemberAccessExpressionCompiler memberAccessExpressionCompiler = new MemberAccessExpressionCompiler(this);
+            return memberAccessExpressionCompiler.compileMemberAccessExpression(context);
+        }
+        if(context.castExpression() != null){
+            String castTypeName = context.castExpression().typeName().getText();
+            String fullyQualifiedTypeName = methodCompiler.fullyQualifyType(castTypeName);
+            Result expressionResult = compileExpression(context.castExpression().expression());
+            insnList.add(expressionResult.insnList);
+            insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
+            resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
         }
         return new Result(insnList, resultType);
     }

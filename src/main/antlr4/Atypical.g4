@@ -46,11 +46,15 @@ asignLocalVariableStatement: variableName ASIGN expression;
 //Expression
 expression:
       unaryExpression
+    | castExpression
+    | parentheseExpression
     | left=expression binaryExpression
     | terminalExpression
     | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
     | memberAccessExpression;                       //things like "abc".replace();
 
+parentheseExpression: LPAREN expression RPAREN;
+castExpression: LPAREN typeName RPAREN expression;
 memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;
 primaryMemberAccess: fieldAccessExpression | methodInvocationExpression;
 fieldAccessExpression: memberName;

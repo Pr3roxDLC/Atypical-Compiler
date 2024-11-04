@@ -1,10 +1,10 @@
 import java.lang.String as String;
 import java.lang.System as System;
 import java.io.PrintStream as PS;
+import java.lang.CharSequence as CS;
 
 main(String[]: args){
-    int: x = 10 + 10;
-    System.out.println("HelloWorld");
+    System.out.println("helloWorld".replace((CS)"h", (CS)"H"));
 }
 
 
