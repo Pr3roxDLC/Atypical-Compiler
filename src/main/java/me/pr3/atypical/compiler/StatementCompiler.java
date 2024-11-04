@@ -31,14 +31,14 @@ public class StatementCompiler {
             Result expressionResult = compiler.compileExpression(lvde.expression());
             insnList.add(expressionResult.insnList());
             int localVarIndex = methodCompiler.addLocalVar(localVarType, lvde.variableName().getText());
-            insnList.add(new VarInsnNode(Opcodes.ISTORE, localVarIndex));
+            insnList.add(new VarInsnNode(getStoreInstruction(expressionResult.returnType()), localVarIndex));
         }
         if (context.asignLocalVariableStatement() != null) {
             AsignLocalVariableStatementContext alvs = context.asignLocalVariableStatement();
             int localVarIndex = methodCompiler.getLocalVarIndexByName(alvs.variableName().getText());
             Result expressionResult = compiler.compileExpression(alvs.expression());
             insnList.add(expressionResult.insnList());
-            insnList.add(new VarInsnNode(Opcodes.ISTORE, localVarIndex));
+            insnList.add(new VarInsnNode(getStoreInstruction(expressionResult.returnType()), localVarIndex));
         }
         if (context.expression() != null) {
             ExpressionContext expression = context.expression();
@@ -66,6 +66,13 @@ public class StatementCompiler {
             case "I", "Z" -> Opcodes.IRETURN;
             case "V" -> Opcodes.RETURN;
             default -> Opcodes.ARETURN;
+        };
+    }
+
+    private int getStoreInstruction(String varType){
+        return switch (varType){
+            case "I", "Z" -> Opcodes.ISTORE;
+            default -> Opcodes.ASTORE;
         };
     }
 }

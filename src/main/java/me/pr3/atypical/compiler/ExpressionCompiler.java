@@ -54,7 +54,7 @@ public class ExpressionCompiler {
                 if (methodCompiler.containsLocalVarWithName(name)) {
                     String type = methodCompiler.getLocalVarTypeByName(name);
                     int varIndex = methodCompiler.getLocalVarIndexByName(name);
-                    insnList.add(new VarInsnNode(Opcodes.ILOAD, varIndex));
+                    insnList.add(new VarInsnNode(getLoadInstructionForType(type), varIndex));
                     resultType = type;
                 } else if (isClassName(name)) {
                     resultType = TypeUtil.toTypePrefixed(TypeUtil.toDesc(name));
@@ -71,6 +71,27 @@ public class ExpressionCompiler {
             Result expressionResult = compileExpression(context.castExpression().expression());
             insnList.add(expressionResult.insnList);
             insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
+            resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
+        }
+        if(context.structInitializerExpression() != null){
+            StructInitializerExpressionContext structInitializerExpression = context.structInitializerExpression();
+            String typeName = structInitializerExpression.typeName().getText();
+            String fullyQualifiedTypeName = methodCompiler.fullyQualifyType(typeName);
+            insnList.add(new TypeInsnNode(Opcodes.NEW, fullyQualifiedTypeName));
+            insnList.add(new InsnNode(Opcodes.DUP));
+            StringBuilder desc = new StringBuilder("(");
+            if(structInitializerExpression.argList() != null){
+                ArgListContext argList = structInitializerExpression.argList();
+                for (ExpressionContext expression : argList.expression()) {
+                    Result expressionResult = compileExpression(expression);
+                    insnList.add(expressionResult.insnList);
+                    desc.append(expressionResult.returnType);
+                }
+            }
+            desc.append("Ljava/lang/Void;");
+            insnList.add(new InsnNode(Opcodes.ACONST_NULL));
+            desc.append(")V");
+            insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", desc.toString()));
             resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
         }
         return new Result(insnList, resultType);
@@ -185,6 +206,13 @@ public class ExpressionCompiler {
         }
         throw new IllegalStateException("Unable to resolve binary operator instructions for op: "
                 + operator.getText() + " for type: " + type);
+    }
+
+    public int getLoadInstructionForType(String varType){
+        return switch (varType){
+            case "I", "Z" -> Opcodes.ILOAD;
+            default -> Opcodes.ALOAD;
+        };
     }
 
     public record Result(InsnList insnList, String returnType) {

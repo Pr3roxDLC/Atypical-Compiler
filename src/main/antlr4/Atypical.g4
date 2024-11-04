@@ -48,6 +48,7 @@ returnStatement: RETURN expression?;
 //Expression
 expression:
       unaryExpression
+    | structInitializerExpression
     | castExpression
     | parentheseExpression
     | left=expression binaryExpression
@@ -55,6 +56,7 @@ expression:
     | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
     | memberAccessExpression;                       //things like "abc".replace();
 
+structInitializerExpression: typeName LBRACE argList? RBRACE;
 parentheseExpression: LPAREN expression RPAREN;
 castExpression: LPAREN typeName RPAREN expression;
 memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;

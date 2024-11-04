@@ -2,9 +2,11 @@ import java.lang.String as String;
 import java.lang.System as System;
 import java.io.PrintStream as PS;
 import java.lang.CharSequence as CS;
+import java.lang.Object as obj;
 
 main(String[]: args){
-    System.out.println(Input.otherMethod().replace((CS)"h", (CS)"H"));
+    List: l = List{10};
+    System.out.println(l.getInt());
 }
 
 otherMethod(): String {

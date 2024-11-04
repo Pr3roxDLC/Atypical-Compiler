@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
@@ -83,6 +84,10 @@ public class StructureCompiler {
                             MethodCompiler methodCompiler = new MethodCompiler(this);
                             methodCompiler.compileMethod(entry.getKey(), implMember.methodImplementation(), moduleName);
                         }
+                    }
+                    if(moduleMemberDeclaration.moduleStructDeclaration() != null){
+                        StructInitializerCompiler structInitializerCompiler = new StructInitializerCompiler(this);
+                        structInitializerCompiler.compileStructInitializer(moduleMemberDeclaration.moduleStructDeclaration(), entry.getKey(), moduleName);
                     }
                 }
             }
@@ -188,6 +193,8 @@ public class StructureCompiler {
                             TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText()), null, null));
                 }
                 classNode.fields = structMembers;
+                //Add the synthetic constructor used by the struct initializer expression
+                classNode.methods.add(generateStructureInitializerConstructor(structMembers));
             }
 
             if (member.moduleSelfImplDeclaration() != null) {
@@ -210,6 +217,12 @@ public class StructureCompiler {
 
         generatedClassNodes.put(typeName, classNode);
 
+    }
+
+    private MethodNode generateStructureInitializerConstructor(List<FieldNode> fields) {
+        String args = fields.stream().map(field -> field.desc).collect(Collectors.joining()) + "Ljava/lang/Void;";
+        String desc = "(" + args + ")V";
+        return new MethodNode(Opcodes.ACC_PUBLIC, "<init>", desc, null, new String[0]);
     }
 
     private void parseSingleFile(String fileName, String content) {
