@@ -58,6 +58,20 @@ public class ExpressionCompiler {
                     int varIndex = methodCompiler.getLocalVarIndexByName(name);
                     insnList.add(new VarInsnNode(getLoadInstructionForType(type), varIndex));
                     resultType = type;
+                }else if(name.equals("this")){
+                    if(Modifier.isStatic(methodCompiler.methodNode.access)) {
+                        throw new IllegalStateException("Reserved keyword 'this' not allowed in non static methods");
+                    }
+                    if(structureCompiler.isClassNameImplClass(methodCompiler.className)){
+                        String type = TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className.split("\\$")[0]));
+                        insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        insnList.add(new FieldInsnNode(Opcodes.GETFIELD, methodCompiler.className, "this_", type));
+                        resultType = type;
+                    }else {
+                        String type = TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className));
+                        insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        resultType = type;
+                    }
                 }else if(isLocalFieldName(name)){
                     FieldNode fieldNode = getLocalFieldByName(name);
                     String type = fieldNode.desc;

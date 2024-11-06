@@ -292,4 +292,18 @@ public class StructureCompiler {
 
     }
 
+    public boolean isClassNameImplClass(String className){
+        for (Entry<String, Set<ImplDeclarationContext>> entry : impls.entrySet()) {
+            for (ImplDeclarationContext implDeclarationContext : entry.getValue()) {
+                String structTypeName = imports.get(entry.getKey()).getOrDefault(implDeclarationContext.struct.getText(),
+                        implDeclarationContext.struct.getText());
+                String traitTypeName = imports.get(entry.getKey()).getOrDefault(implDeclarationContext.itf.getText(),
+                        implDeclarationContext.itf.getText());
+                String implClassName = structTypeName + "$" + traitTypeName;
+                if(implClassName.equals(className))return true;
+            }
+        }
+        return false;
+    }
+
 }
