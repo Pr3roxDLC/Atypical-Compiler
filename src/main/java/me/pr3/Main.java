@@ -20,9 +20,12 @@ public class Main {
         Map<String, byte[]> result = compiler.compile();
 
         for (Map.Entry<String, byte[]> entry : result.entrySet()) {
-            Files.deleteIfExists(Path.of("./example/" + entry.getKey() + ".class"));
-            Files.createFile(Path.of("./example/" + entry.getKey() + ".class"));
-            Files.write(Path.of("./example/" + entry.getKey() + ".class"), entry.getValue(), StandardOpenOption.WRITE);
+            String fileName = entry.getKey();
+            Path outputPath = Path.of("./example/" + fileName + ".class");
+            Files.deleteIfExists(outputPath);
+            Files.createDirectories(outputPath.getParent());
+            Files.createFile(outputPath);
+            Files.write(outputPath, entry.getValue(), StandardOpenOption.WRITE);
         }
 
     }

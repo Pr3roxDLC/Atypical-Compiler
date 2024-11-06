@@ -7,6 +7,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static me.pr3.atypical.compiler.ExpressionCompiler.*;
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
@@ -75,8 +78,38 @@ public class MemberAccessExpressionCompiler {
                 owningClassNode,
                 methodName,
                 desc.toString());
-        insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
-        return Type.getMethodType(invokedMethod.desc).getReturnType().toString();
+        if(invokedMethod != null){
+            insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
+            return Type.getMethodType(invokedMethod.desc).getReturnType().toString();
+        }else {
+            String returnType = insertTraitImplMethodInstructions(insnList, methodName, desc, owner);
+            if (returnType != null) return returnType;
+        }
+        throw new IllegalStateException("No valid method found for: " + owner + "." + methodName + desc);
+    }
+
+    private String insertTraitImplMethodInstructions(InsnList insnList, String methodName, StringBuilder desc, String owner) {
+        Set<String> implementedTraits = this.expressionCompiler.structureCompiler.implementedTraitsForStruct
+                .getOrDefault(owner, new HashSet<>());
+        for (String trait : implementedTraits) {
+            ClassNode traitClass = this.expressionCompiler.structureCompiler.generatedClassNodes.get(trait);
+            MethodNode invokedTraitMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
+                    traitClass,
+                    methodName,
+                    desc.toString());
+            if(invokedTraitMethod != null){
+                String implClassName = owner + "$" + traitClass.name;
+                String implClassConstructorDesc = "(" + TypeUtil.toDesc(owner) + ")V";
+                insnList.add(new TypeInsnNode(Opcodes.NEW, implClassName));
+                insnList.add(new InsnNode(Opcodes.DUP));
+                insnList.add(new InsnNode(Opcodes.DUP2_X1));
+                insnList.add(new InsnNode(Opcodes.POP2));
+                insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, implClassName, "<init>", implClassConstructorDesc));
+                insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, implClassName, invokedTraitMethod.name, invokedTraitMethod.desc));
+                return Type.getMethodType(invokedTraitMethod.desc).getReturnType().toString();
+            }
+        }
+        return null;
     }
 
     private String addFieldAccessInstructions(FieldAccessExpressionContext fieldAccessExpression, String staticType, InsnList insnList, int getstatic) {

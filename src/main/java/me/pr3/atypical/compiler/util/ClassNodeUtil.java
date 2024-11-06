@@ -17,7 +17,7 @@ public class ClassNodeUtil {
         for (MethodNode method : classNode.methods) {
             if(method.name.equals(name) && method.desc.equals(desc))return method;
         }
-        throw new IllegalArgumentException("No method found for name: " + name + " and desc: " + desc);
+        return null;
     }
 
     public static MethodNode getMethodNodeByNameAndParameterTypes(ClassNode classNode, String name, String parameterTypes){
@@ -29,7 +29,7 @@ public class ClassNodeUtil {
                 if(Arrays.equals(tempMethodDesc.getArgumentTypes(), methodDesc.getArgumentTypes()))return method;
             }
         }
-        throw new IllegalArgumentException("No method found for name: " + name + " and parameters: " + parameterTypes);
+        return null;
     }
 
     public static FieldNode getFieldNodeByName(ClassNode classNode, String name){

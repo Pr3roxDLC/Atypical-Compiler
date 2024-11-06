@@ -26,5 +26,6 @@ public class ImplConstructorCompiler {
         constructor.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
         constructor.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
         constructor.instructions.add(new FieldInsnNode(Opcodes.PUTFIELD, className, "this_", TypeUtil.toDesc(context.struct.getText(), structureCompiler.imports.get(fileName))));
+        constructor.instructions.add(new InsnNode(Opcodes.RETURN));
     }
 }

@@ -156,14 +156,15 @@ public class StructureCompiler {
     }
 
     private void generateClassFromImpl(ImplDeclarationContext context, String fileName){
-        String className = context.struct.getText() + "$" + context.itf.getText();
+        String className = imports.get(fileName).getOrDefault(context.struct.getText(), context.struct.getText())
+                + "$" + imports.get(fileName).getOrDefault(context.itf.getText(), context.itf.getText());
 
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC;
         classNode.version = Opcodes.V1_8;
         classNode.name = className;
         classNode.methods = new ArrayList<>();
-        classNode.interfaces = List.of(context.itf.getText());
+        classNode.superName = "java/lang/Object";
 
         for (ImplMemberDeclarationContext member : context.implMemberDeclaration()) {
             MethodSignatureContext signature = member.methodImplementation().methodSignature();

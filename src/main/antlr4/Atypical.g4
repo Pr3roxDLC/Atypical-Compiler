@@ -58,7 +58,7 @@ expression:
 
 structInitializerExpression: typeName LBRACE argList? RBRACE;
 parentheseExpression: LPAREN expression RPAREN;
-castExpression: LPAREN typeName RPAREN expression;
+castExpression: LPAREN typeName RPAREN expression; //TODO implement
 memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;
 primaryMemberAccess: fieldAccessExpression | methodInvocationExpression;
 fieldAccessExpression: memberName;

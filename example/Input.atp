@@ -6,7 +6,7 @@ import java.lang.Object as obj;
 
 main(String[]: args){
     List: l = List{10};
-    System.out.println(l.getInt());
+    System.out.println(l.clone().getInt());
 }
 
 otherMethod(): String {
@@ -31,11 +31,21 @@ module List {
 }
 
 trait Cloneable {
-    clone(): obj;
+    clone(): List;
+}
+
+trait Greetable {
+    greet();
 }
 
 impl Cloneable for List {
-    clone(): obj {
+    clone(): List {
         return List{20};
+    }
+}
+
+impl Greetable for String {
+    greet(){
+        System.out.println("Hello");
     }
 }
