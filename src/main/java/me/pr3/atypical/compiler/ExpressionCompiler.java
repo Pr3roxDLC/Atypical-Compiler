@@ -7,6 +7,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import java.lang.reflect.Modifier;
+
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
 /**
@@ -56,6 +58,16 @@ public class ExpressionCompiler {
                     int varIndex = methodCompiler.getLocalVarIndexByName(name);
                     insnList.add(new VarInsnNode(getLoadInstructionForType(type), varIndex));
                     resultType = type;
+                }else if(isLocalFieldName(name)){
+                    FieldNode fieldNode = getLocalFieldByName(name);
+                    String type = fieldNode.desc;
+                    if(Modifier.isStatic(methodCompiler.methodNode.access)){
+                        insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, methodCompiler.className, name, type));
+                    }else{
+                        insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        insnList.add(new FieldInsnNode(Opcodes.GETFIELD, methodCompiler.className, name, type));
+                    }
+                    resultType = type;
                 } else if (isClassName(name)) {
                     resultType = TypeUtil.toTypePrefixed(TypeUtil.toDesc(name));
                 }
@@ -95,6 +107,14 @@ public class ExpressionCompiler {
             resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
         }
         return new Result(insnList, resultType);
+    }
+
+    private boolean isLocalFieldName(String name) {
+        return structureCompiler.generatedClassNodes.get(methodCompiler.className).fields.stream().anyMatch(f -> f.name.equals(name));
+    }
+
+    private FieldNode getLocalFieldByName(String name) {
+        return structureCompiler.generatedClassNodes.get(methodCompiler.className).fields.stream().filter(f -> f.name.equals(name)).findAny().orElseThrow();
     }
 
     private boolean isClassName(String type){

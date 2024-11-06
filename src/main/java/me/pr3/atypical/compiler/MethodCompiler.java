@@ -22,6 +22,7 @@ public class MethodCompiler {
     LabelNode startLabel = new LabelNode();
     LabelNode endLabel = new LabelNode();
     String fileName = "";
+    String className = "";
     public MethodCompiler(StructureCompiler parent){
         this.structureCompiler = parent;
     }
@@ -31,6 +32,7 @@ public class MethodCompiler {
 
     public void compileMethod(String fileName, MethodImplementationContext value, String className) {
         this.fileName = fileName;
+        this.className = className;
         ClassNode node = structureCompiler.generatedClassNodes.get(className);
         this.methodNode = ClassNodeUtil.getMethodNodeByNameAndDescriptor(node,
                 value.methodSignature().memberName().getText(),

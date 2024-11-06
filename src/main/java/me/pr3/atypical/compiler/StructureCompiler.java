@@ -190,11 +190,11 @@ public class StructureCompiler {
                 for (StructMemberDeclarationContext structMemberDeclarationContext : struct.structMemberDeclaration()) {
                     structMembers.add(new FieldNode(Opcodes.ACC_PUBLIC,
                             structMemberDeclarationContext.memberName().getText(),
-                            TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText()), null, null));
+                            TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText(), imports.get(fileName)), null, null));
                 }
                 classNode.fields = structMembers;
                 //Add the synthetic constructor used by the struct initializer expression
-                classNode.methods.add(generateStructureInitializerConstructor(structMembers));
+                classNode.methods.add(generateStructInitializerConstructor(structMembers));
             }
 
             if (member.moduleSelfImplDeclaration() != null) {
@@ -219,7 +219,7 @@ public class StructureCompiler {
 
     }
 
-    private MethodNode generateStructureInitializerConstructor(List<FieldNode> fields) {
+    private MethodNode generateStructInitializerConstructor(List<FieldNode> fields) {
         String args = fields.stream().map(field -> field.desc).collect(Collectors.joining()) + "Ljava/lang/Void;";
         String desc = "(" + args + ")V";
         return new MethodNode(Opcodes.ACC_PUBLIC, "<init>", desc, null, new String[0]);

@@ -11,11 +11,12 @@ import org.objectweb.asm.tree.*;
  */
 public class StructInitializerCompiler {
     StructureCompiler structureCompiler;
-    public StructInitializerCompiler(StructureCompiler structureCompiler){
+
+    public StructInitializerCompiler(StructureCompiler structureCompiler) {
         this.structureCompiler = structureCompiler;
     }
 
-    public void compileStructInitializer(AtypicalParser.ModuleStructDeclarationContext struct, String fileName, String moduleName){
+    public void compileStructInitializer(AtypicalParser.ModuleStructDeclarationContext struct, String fileName, String moduleName) {
         ClassNode moduleClassNode = structureCompiler.generatedClassNodes.get(moduleName);
         StringBuilder desc = new StringBuilder("(");
         for (AtypicalParser.StructMemberDeclarationContext structMemberDeclarationContext : struct.structMemberDeclaration()) {
@@ -33,15 +34,24 @@ public class StructInitializerCompiler {
         int i = 1;
         for (AtypicalParser.StructMemberDeclarationContext structMemberDeclarationContext : struct.structMemberDeclaration()) {
             structInitializer.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            structInitializer.instructions.add(new VarInsnNode(Opcodes.ILOAD, i));
+            structInitializer.instructions.add(new VarInsnNode(getLoadInstructionForType(
+                    TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName))), i));
             structInitializer.instructions.add(new FieldInsnNode(Opcodes.PUTFIELD,
                     structureCompiler.imports.get(fileName).getOrDefault(moduleName, moduleName),
                     structMemberDeclarationContext.memberName().getText(),
                     TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText(),
                             structureCompiler.imports.get(fileName))
-                    ));
+            ));
+            i++;
         }
         structInitializer.instructions.add(new InsnNode(Opcodes.RETURN));
+    }
+
+    public int getLoadInstructionForType(String varType) {
+        return switch (varType) {
+            case "I", "Z" -> Opcodes.ILOAD;
+            default -> Opcodes.ALOAD;
+        };
     }
 
 }
