@@ -21,7 +21,6 @@ module List {
 
     impl {
         getInt(): int {
-            int: x = 10 + 10;
             return x;
         }
         setInt(int: i) {}
@@ -37,6 +36,6 @@ trait Cloneable {
 
 impl Cloneable for List {
     clone(): obj {
-        int: x = 10 + 10 +10;
+        return List{20};
     }
 }

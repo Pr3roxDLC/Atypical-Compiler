@@ -31,8 +31,11 @@ public class StructureCompiler {
     public Map<String, Set<ImplDeclarationContext>> impls = new HashMap<>();
     public Map<String, List<MethodImplementationContext>> globalMethods = new HashMap<>();
 
+
     //Map<File, Map<ImportedClass, Alias>>
     public Map<String, Map<String, String>> imports = new HashMap<>();
+
+    public Map<String, Set<String>> implementedTraitsForStruct = new HashMap<>();
 
     //Output
     public Map<String, ClassNode> generatedClassNodes = new HashMap<>();
@@ -90,6 +93,21 @@ public class StructureCompiler {
                         structInitializerCompiler.compileStructInitializer(moduleMemberDeclaration.moduleStructDeclaration(), entry.getKey(), moduleName);
                     }
                 }
+            }
+        }
+
+        for (Entry<String, Set<ImplDeclarationContext>> entry : impls.entrySet()) {
+            String fileName = entry.getKey();
+            for (ImplDeclarationContext impl : entry.getValue()) {
+                String implementedTraitName = imports.get(fileName).getOrDefault(impl.itf.getText(), impl.itf.getText());
+                String structName = imports.get(fileName).getOrDefault(impl.struct.getText(), impl.struct.getText());
+                String implClassName = structName + "$" + implementedTraitName;
+                for (ImplMemberDeclarationContext member : impl.implMemberDeclaration()) {
+                    MethodCompiler methodCompiler = new MethodCompiler(this);
+                    methodCompiler.compileMethod(fileName, member.methodImplementation(), implClassName);
+                }
+                ImplConstructorCompiler implConstructorCompiler = new ImplConstructorCompiler(this);
+                implConstructorCompiler.compileImplConstructor(impl, implClassName, fileName);
             }
         }
 
@@ -153,6 +171,13 @@ public class StructureCompiler {
             MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, signature.memberName().getText(), desc, null, null);
             classNode.methods.add(methodNode);
         }
+        String structType = TypeUtil.toDesc(context.struct.getText(), imports.get(fileName));
+        String constructorDesc = "(" + structType + ")V";
+        MethodNode constructor = new MethodNode(Opcodes.ACC_PUBLIC, "<init>", constructorDesc, null, new String[0]);
+        classNode.methods.add(constructor);
+
+        FieldNode thisField = new FieldNode(Opcodes.ACC_PUBLIC, "this_", structType, null, null);
+        classNode.fields = List.of(thisField);
 
         generatedClassNodes.put(className, classNode);
     }
@@ -244,7 +269,16 @@ public class StructureCompiler {
         for (FileMemberContext fileMemberContext : fileContext.fileMember()) {
             if(fileMemberContext.moduleDeclaration() != null)this.modules.get(fileName).add(fileMemberContext.moduleDeclaration());
             if(fileMemberContext.traitDeclaration() != null)this.traits.get(fileName).add(fileMemberContext.traitDeclaration());
-            if(fileMemberContext.implDeclaration() != null)this.impls.get(fileName).add(fileMemberContext.implDeclaration());
+            if(fileMemberContext.implDeclaration() != null) {
+                ImplDeclarationContext implDeclarationContext = fileMemberContext.implDeclaration();
+                String structTypeName = imports.get(fileName).getOrDefault(implDeclarationContext.struct.getText(),
+                        implDeclarationContext.struct.getText());
+                String traitTypeName = imports.get(fileName).getOrDefault(implDeclarationContext.itf.getText(),
+                        implDeclarationContext.itf.getText());
+                implementedTraitsForStruct.computeIfAbsent(structTypeName, (s) -> new HashSet<>()).add(traitTypeName);
+
+                this.impls.get(fileName).add(fileMemberContext.implDeclaration());
+            }
 
             if(fileMemberContext.methodImplementation() != null) {
                 if(globalMethods.containsKey(fileName)){
