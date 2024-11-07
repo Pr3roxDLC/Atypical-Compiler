@@ -50,14 +50,14 @@ expression:
       unaryExpression
     | structInitializerExpression
     | castExpression
-    | parentheseExpression
+    | parenthesesExpression
     | left=expression binaryExpression
     | terminalExpression
     | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
     | memberAccessExpression;                       //things like "abc".replace();
 
 structInitializerExpression: typeName LBRACE argList? RBRACE;
-parentheseExpression: LPAREN expression RPAREN;
+parenthesesExpression: LPAREN expression RPAREN;
 castExpression: LPAREN typeName RPAREN expression; //TODO implement
 memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;
 primaryMemberAccess: fieldAccessExpression | methodInvocationExpression;

@@ -120,6 +120,12 @@ public class ExpressionCompiler {
             insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", desc.toString()));
             resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
         }
+        if(context.parenthesesExpression() != null){
+            ParenthesesExpressionContext parenthesesExpression = context.parenthesesExpression();
+            Result expressionResult = compileExpression(parenthesesExpression.expression());
+            insnList.add(expressionResult.insnList);
+            resultType = expressionResult.returnType;
+        }
         return new Result(insnList, resultType);
     }
 
