@@ -1,4 +1,4 @@
-package me.pr3.atypical.compiler;
+package me.pr3.atypical.compiler.expression;
 
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
@@ -7,10 +7,11 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
-import static me.pr3.atypical.compiler.ExpressionCompiler.*;
+import static me.pr3.atypical.compiler.expression.ExpressionCompiler.*;
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
 /**
@@ -64,6 +65,7 @@ public class MemberAccessExpressionCompiler {
     private String insertMethodInvocationInstructions(InsnList insnList, String lastType, MethodInvocationExpressionContext methodInvocationExpression, int opcode) {
         String methodName = methodInvocationExpression.memberName().getText();
         StringBuilder desc = new StringBuilder();
+        boolean methodOwnerIsTrait = isTypeTrait(TypeUtil.extractClassFromType(lastType));
         if (methodInvocationExpression.argList() != null) {
             for (ExpressionContext argExpression : methodInvocationExpression.argList().expression()) {
                 Result argExpressionResult = expressionCompiler.compileExpression(argExpression);
@@ -79,7 +81,11 @@ public class MemberAccessExpressionCompiler {
                 methodName,
                 desc.toString());
         if(invokedMethod != null){
-            insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
+            if(methodOwnerIsTrait){
+                insnList.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, owner, invokedMethod.name, invokedMethod.desc, true));
+            }else {
+                insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
+            }
             return Type.getMethodType(invokedMethod.desc).getReturnType().toString();
         }else {
             String returnType = insertTraitImplMethodInstructions(insnList, methodName, desc, owner);
@@ -120,6 +126,12 @@ public class MemberAccessExpressionCompiler {
         FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(owningClassNode, fieldName);
         insnList.add(new FieldInsnNode(getstatic, importMappedOwner, fieldName, fieldNode.desc));
         return fieldNode.desc;
+    }
+
+    private boolean isTypeTrait(String typeName){
+        ClassNode classNode = this.expressionCompiler.structureCompiler.generatedClassNodes.get(typeName);
+        if(classNode == null) classNode = ClassNodeUtil.loadClassNodeFromJDKCLasses(typeName);
+        return Modifier.isInterface(classNode.access);
     }
 
 }

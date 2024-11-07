@@ -1,10 +1,10 @@
-package me.pr3.atypical.compiler;
+package me.pr3.atypical.compiler.expression;
 
+import me.pr3.atypical.compiler.MethodCompiler;
+import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
@@ -92,12 +92,8 @@ public class ExpressionCompiler {
             return memberAccessExpressionCompiler.compileMemberAccessExpression(context);
         }
         if(context.castExpression() != null){
-            String castTypeName = context.castExpression().typeName().getText();
-            String fullyQualifiedTypeName = methodCompiler.fullyQualifyType(castTypeName);
-            Result expressionResult = compileExpression(context.castExpression().expression());
-            insnList.add(expressionResult.insnList);
-            insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
-            resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
+            CastExpressionCompiler castExpressionCompiler = new CastExpressionCompiler(this);
+            return castExpressionCompiler.compileCastExpression(context.castExpression());
         }
         if(context.structInitializerExpression() != null){
             StructInitializerExpressionContext structInitializerExpression = context.structInitializerExpression();

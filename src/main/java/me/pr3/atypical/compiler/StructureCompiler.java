@@ -165,6 +165,7 @@ public class StructureCompiler {
         classNode.name = className;
         classNode.methods = new ArrayList<>();
         classNode.superName = "java/lang/Object";
+        classNode.interfaces = List.of(imports.get(fileName).getOrDefault(context.itf.getText(), context.itf.getText()));
 
         for (ImplMemberDeclarationContext member : context.implMemberDeclaration()) {
             MethodSignatureContext signature = member.methodImplementation().methodSignature();
@@ -185,15 +186,16 @@ public class StructureCompiler {
 
     private void generateInterfaceFromTrait(TraitDeclarationContext context, String fileName){
         ClassNode classNode = new ClassNode();
-        classNode.access = Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE;
+        classNode.access = Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT;
         classNode.version = Opcodes.V1_8;
         classNode.name = context.typeName().getText();
         classNode.methods = new ArrayList<>();
+        classNode.superName = "java/lang/Object";
 
         for (TraitMemberDeclarationContext member : context.traitMemberDeclaration()) {
             MethodSignatureContext signature = member.methodDeclaration().methodSignature();
             String desc = TypeUtil.extractMethodDescriptor(signature, imports.get(fileName));
-            classNode.methods.add(new MethodNode(Opcodes.ACC_ABSTRACT, signature.memberName().getText(), desc, null, null));
+            classNode.methods.add(new MethodNode(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC, signature.memberName().getText(), desc, null, null));
         }
 
         generatedClassNodes.put(context.typeName().getText(), classNode);

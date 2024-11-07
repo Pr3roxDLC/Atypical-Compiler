@@ -13,16 +13,16 @@ import static me.pr3.atypical.generated.AtypicalParser.*;
  * @author tim
  */
 public class MethodCompiler {
-    StructureCompiler structureCompiler;
+    public StructureCompiler structureCompiler;
 
-    List<String> localVars = new ArrayList<>();//Holds the type of each local var (we do not reuse indices)
-    Map<String, Integer> localVarNameMapping = new HashMap<>();
+    public List<String> localVars = new ArrayList<>();//Holds the type of each local var (we do not reuse indices)
+    public Map<String, Integer> localVarNameMapping = new HashMap<>();
 
-    MethodNode methodNode = null;
-    LabelNode startLabel = new LabelNode();
-    LabelNode endLabel = new LabelNode();
-    String fileName = "";
-    String className = "";
+    public MethodNode methodNode = null;
+    public LabelNode startLabel = new LabelNode();
+    public LabelNode endLabel = new LabelNode();
+    public String fileName = "";
+    public String className = "";
     public MethodCompiler(StructureCompiler parent){
         this.structureCompiler = parent;
     }

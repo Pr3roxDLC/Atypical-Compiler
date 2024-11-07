@@ -5,8 +5,9 @@ import java.lang.CharSequence as CS;
 import java.lang.Object as obj;
 
 main(String[]: args){
-    List: l = List{10};
-    System.out.println(l.clone().getInt());
+    obj: l = List{10};
+    Cloneable: c = (Cloneable)l;
+    System.out.println(c.clone().getInt());
 }
 
 otherMethod(): String {
