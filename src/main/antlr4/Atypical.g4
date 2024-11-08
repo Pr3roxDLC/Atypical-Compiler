@@ -51,15 +51,17 @@ elseStatement: ELSE LBRACE statement* RBRACE;
 
 //Expression
 expression:
-      unaryExpression
+      terminalExpression
+    | left=expression arrayAccessExpression
     | structInitializerExpression
     | castExpression
     | parenthesesExpression
     | left=expression binaryExpression
-    | terminalExpression
+    | unaryExpression
     | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
     | memberAccessExpression;                       //things like "abc".replace();
 
+arrayAccessExpression: LBRACK expression RBRACK;
 structInitializerExpression: typeName LBRACE argList? RBRACE;
 parenthesesExpression: LPAREN expression RPAREN;
 castExpression: LPAREN typeName RPAREN expression; //TODO implement
@@ -133,9 +135,9 @@ DEC: '--';
 
 
 //REGEX
-LETTER : [a-zA-Z]+ ;
-LETTER_OR_DIGIT: LETTER | [0-9];
 NUMBER : [0-9]+;
+LETTER : [a-zA-Z]+ ;
+LETTER_OR_DIGIT: LETTER | NUMBER;
 
 //Ignore whitespace
 WS : [ \t\r\n]+ -> skip ;

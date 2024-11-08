@@ -2,8 +2,7 @@ import java.lang.String as String;
 import java.lang.System as System;
 
 main(String[]: args){
-   String[][]: strs = String[][]{String[]{"Hello"}, String[]{"World"}};
-   System.out.println((obj)strs);
+   String[]: strings = String[]{"Hello", "World"};
 }
 
 otherMethod(): String {

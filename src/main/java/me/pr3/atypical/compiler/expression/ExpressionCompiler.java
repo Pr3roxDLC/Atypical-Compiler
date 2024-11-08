@@ -108,6 +108,16 @@ public class ExpressionCompiler {
             insnList.add(expressionResult.insnList);
             resultType = expressionResult.returnType;
         }
+        if(context.arrayAccessExpression() != null){
+            Result leftExpressionResult = compileExpression(context.left);
+            if(!TypeUtil.isArrayType(leftExpressionResult.returnType))throw new IllegalStateException("Cant use array access operator on non array type");
+            insnList.add(leftExpressionResult.insnList);
+            Result indexExpressionResult = compileExpression(context.arrayAccessExpression().expression());
+            if(!indexExpressionResult.returnType.equals("I"))
+                throw new IllegalStateException("Index expression for array access operator has to evaluate to int, evaluated to: " + indexExpressionResult.returnType);
+            insnList.add(indexExpressionResult.insnList);
+            insnList.add(new InsnNode(Opcodes.AALOAD));
+        }
         return new Result(insnList, resultType);
     }
 
