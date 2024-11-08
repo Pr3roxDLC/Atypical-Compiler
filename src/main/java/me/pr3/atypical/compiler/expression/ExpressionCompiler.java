@@ -117,6 +117,7 @@ public class ExpressionCompiler {
                 throw new IllegalStateException("Index expression for array access operator has to evaluate to int, evaluated to: " + indexExpressionResult.returnType);
             insnList.add(indexExpressionResult.insnList);
             insnList.add(new InsnNode(Opcodes.AALOAD));
+            resultType = leftExpressionResult.returnType.substring(1);
         }
         return new Result(insnList, resultType);
     }
