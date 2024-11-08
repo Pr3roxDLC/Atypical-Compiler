@@ -40,10 +40,14 @@ parameterDeclaration: typeName COLON memberName;
 statement: localVariableDeclarationExpression SEMICOLON
     | asignLocalVariableStatement SEMICOLON
     | expression SEMICOLON
-    | returnStatement SEMICOLON;
+    | returnStatement SEMICOLON
+    | ifStatement;
 localVariableDeclarationExpression: typeName COLON variableName ASIGN expression;
 asignLocalVariableStatement: variableName ASIGN expression;
 returnStatement: RETURN expression?;
+ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE ELSE ifStatement* elseStatement?;
+elseIfStatement: ELSE IF LPAREN expression RPAREN LBRACE statement* RBRACE;
+elseStatement: ELSE LBRACE statement* RBRACE;
 
 //Expression
 expression:
@@ -92,6 +96,8 @@ FOR: 'for';
 IMPORT: 'import';
 AS: 'as';
 RETURN: 'return';
+IF: 'if';
+ELSE: 'else';
 
 //Reserved Chars
 LBRACE: '{';

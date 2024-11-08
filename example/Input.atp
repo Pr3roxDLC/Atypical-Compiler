@@ -1,13 +1,15 @@
 import java.lang.String as String;
 import java.lang.System as System;
-import java.io.PrintStream as PS;
-import java.lang.CharSequence as CS;
-import java.lang.Object as obj;
 
 main(String[]: args){
-    obj: l = List{10};
-    Cloneable: c = (Cloneable)l;
-    System.out.println(c.clone().getInt());
+    int: x = 1234;
+    if(10 == 10){
+        System.out.println("Hello");
+    }else if(10 == 20){
+        System.out.println("World");
+    }else {
+        System.out.println("Hi");
+    }
 }
 
 otherMethod(): String {

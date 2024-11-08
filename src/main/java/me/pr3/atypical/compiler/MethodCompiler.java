@@ -1,5 +1,6 @@
 package me.pr3.atypical.compiler;
 
+import me.pr3.atypical.compiler.statement.StatementCompiler;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Opcodes;

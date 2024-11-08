@@ -1,5 +1,7 @@
-package me.pr3.atypical.compiler;
+package me.pr3.atypical.compiler.statement;
 
+import me.pr3.atypical.compiler.MethodCompiler;
+import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Opcodes;
@@ -58,6 +60,10 @@ public class StatementCompiler {
             } else {
                 insnList.add(new InsnNode(Opcodes.RETURN));
             }
+        }
+        if(context.ifStatement() != null){
+            IfStatementCompiler ifStatementCompiler = new IfStatementCompiler(this);
+            insnList.add(ifStatementCompiler.compileIfStatement(context.ifStatement()));
         }
         return insnList;
     }
