@@ -1,6 +1,7 @@
 package me.pr3.atypical.compiler.expression;
 
 import me.pr3.atypical.compiler.MethodCompiler;
+import me.pr3.atypical.compiler.StructInitializerCompiler;
 import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
@@ -96,25 +97,10 @@ public class ExpressionCompiler {
             return castExpressionCompiler.compileCastExpression(context.castExpression());
         }
         if(context.structInitializerExpression() != null){
-            StructInitializerExpressionContext structInitializerExpression = context.structInitializerExpression();
-            String typeName = structInitializerExpression.typeName().getText();
-            String fullyQualifiedTypeName = methodCompiler.fullyQualifyType(typeName);
-            insnList.add(new TypeInsnNode(Opcodes.NEW, fullyQualifiedTypeName));
-            insnList.add(new InsnNode(Opcodes.DUP));
-            StringBuilder desc = new StringBuilder("(");
-            if(structInitializerExpression.argList() != null){
-                ArgListContext argList = structInitializerExpression.argList();
-                for (ExpressionContext expression : argList.expression()) {
-                    Result expressionResult = compileExpression(expression);
-                    insnList.add(expressionResult.insnList);
-                    desc.append(expressionResult.returnType);
-                }
-            }
-            desc.append("Ljava/lang/Void;");
-            insnList.add(new InsnNode(Opcodes.ACONST_NULL));
-            desc.append(")V");
-            insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", desc.toString()));
-            resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
+            StructInitializerExpressionCompiler structInitializerExpressionCompiler = new StructInitializerExpressionCompiler(this);
+            Result result = structInitializerExpressionCompiler.compileStructInitializerExpression(context.structInitializerExpression());
+            insnList.add(result.insnList);
+            resultType = result.returnType;
         }
         if(context.parenthesesExpression() != null){
             ParenthesesExpressionContext parenthesesExpression = context.parenthesesExpression();

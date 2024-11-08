@@ -29,8 +29,7 @@ public class StatementCompiler {
         ExpressionCompiler compiler = new ExpressionCompiler(structureCompiler, methodCompiler);
         if (context.localVariableDeclarationExpression() != null) {
             LocalVariableDeclarationExpressionContext lvde = context.localVariableDeclarationExpression();
-            String fullyQualifiedLocalVarType = methodCompiler.fullyQualifyType(lvde.typeName().getText());
-            String localVarType = TypeUtil.toDesc(fullyQualifiedLocalVarType);
+            String localVarType = TypeUtil.toDesc(lvde.typeName().getText(), structureCompiler.imports.get(methodCompiler.fileName));
             Result expressionResult = compiler.compileExpression(lvde.expression());
             insnList.add(expressionResult.insnList());
             int localVarIndex = methodCompiler.addLocalVar(localVarType, lvde.variableName().getText());

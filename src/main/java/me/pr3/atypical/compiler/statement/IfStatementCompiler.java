@@ -1,16 +1,12 @@
 package me.pr3.atypical.compiler.statement;
 
-import me.pr3.atypical.compiler.MethodCompiler;
-import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
-import me.pr3.atypical.generated.AtypicalParser;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
-import static me.pr3.atypical.compiler.expression.ExpressionCompiler.*;
+import static me.pr3.atypical.compiler.expression.ExpressionCompiler.Result;
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
 /**

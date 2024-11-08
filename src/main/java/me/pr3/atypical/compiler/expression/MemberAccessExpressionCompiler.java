@@ -65,7 +65,7 @@ public class MemberAccessExpressionCompiler {
     private String insertMethodInvocationInstructions(InsnList insnList, String lastType, MethodInvocationExpressionContext methodInvocationExpression, int opcode) {
         String methodName = methodInvocationExpression.memberName().getText();
         StringBuilder desc = new StringBuilder();
-        boolean methodOwnerIsTrait = isTypeTrait(TypeUtil.extractClassFromType(lastType));
+        boolean methodOwnerIsTrait = isTypeTrait(TypeUtil.extractTypeNameFromDescriptor(lastType));
         if (methodInvocationExpression.argList() != null) {
             for (ExpressionContext argExpression : methodInvocationExpression.argList().expression()) {
                 Result argExpressionResult = expressionCompiler.compileExpression(argExpression);
@@ -73,7 +73,7 @@ public class MemberAccessExpressionCompiler {
                 desc.append(argExpressionResult.returnType());
             }
         }
-        String owner = TypeUtil.extractClassFromType(lastType);
+        String owner = TypeUtil.extractTypeNameFromDescriptor(lastType);
         String importMappedOwner = expressionCompiler.methodCompiler.fullyQualifyType(owner);
         ClassNode owningClassNode = expressionCompiler.structureCompiler.generatedClassNodes.getOrDefault(importMappedOwner, ClassNodeUtil.loadClassNodeFromJDKCLasses(importMappedOwner));
         MethodNode invokedMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
@@ -120,7 +120,7 @@ public class MemberAccessExpressionCompiler {
 
     private String addFieldAccessInstructions(FieldAccessExpressionContext fieldAccessExpression, String staticType, InsnList insnList, int getstatic) {
         String fieldName = fieldAccessExpression.memberName().getText();
-        String owner = TypeUtil.extractClassFromType(staticType);
+        String owner = TypeUtil.extractTypeNameFromDescriptor(staticType);
         String importMappedOwner = expressionCompiler.methodCompiler.fullyQualifyType(owner);
         ClassNode owningClassNode = expressionCompiler.structureCompiler.generatedClassNodes.getOrDefault(importMappedOwner, ClassNodeUtil.loadClassNodeFromJDKCLasses(importMappedOwner));
         FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(owningClassNode, fieldName);

@@ -17,11 +17,30 @@ public class TypeUtil {
         return mapArrayType(type, importMapping);
     }
 
-    public static String extractClassFromType(String type){
-        if(!type.startsWith("L") || !type.endsWith(";")){
-            throw new IllegalArgumentException("Unable to extract class from type: " + type);
+    public static String extractTypeNameFromDescriptor(String desc){
+        if(desc.startsWith("L") && desc.endsWith(";")){
+            return desc.substring(1).replace(";", "");
         }
-        return type.substring(1).replace(";", "");
+        //TODO make this work for arrays as well
+        return desc;
+    }
+
+    public static int getArrayTypeDims(String arrayType){
+        String temp  = arrayType;
+        int dims = 0;
+        while(temp.startsWith("[")){
+            temp = temp.substring(1);
+            dims++;
+        }
+        return dims;
+    }
+
+    public static String getUnderlyingTypeOfArray(String arrayType){
+        String temp  = arrayType;
+        while(temp.startsWith("[")){
+            temp = temp.substring(1);
+        }
+        return temp;
     }
 
     public static String toTypePrefixed(String desc){
@@ -60,6 +79,10 @@ public class TypeUtil {
         return output.append(mapTypeToJVMType(temp)).toString();
     }
 
+    public static boolean isArrayType(String type){
+        return type.startsWith("[");
+    }
+
     private static String mapTypeToJVMType(String type){
         return switch (type){
             case "int" -> "I";
@@ -83,5 +106,9 @@ public class TypeUtil {
         }else {
             return "(" + parameterTypes + ")V";
         }
+    }
+
+    public static boolean isPrimitiveType(String type) {
+        return !type.startsWith("[") && !type.startsWith("L");
     }
 }

@@ -30,7 +30,7 @@ public class CastExpressionCompiler {
         InsnList insnList = new InsnList();
         String resultType = "V";
         String castTypeName = context.typeName().getText();
-        String fullyQualifiedTypeName = methodCompiler.fullyQualifyType(castTypeName);
+        String fullyQualifiedTypeName = TypeUtil.extractTypeNameFromDescriptor(TypeUtil.toDesc(castTypeName, structureCompiler.imports.get(methodCompiler.fileName)));
         Result expressionResult = expressionCompiler.compileExpression(context.expression());
         insnList.add(expressionResult.insnList());
         if(!isTypeTrait(fullyQualifiedTypeName)) {

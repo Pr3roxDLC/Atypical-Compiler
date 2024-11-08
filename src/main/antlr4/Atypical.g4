@@ -45,7 +45,7 @@ statement: localVariableDeclarationExpression SEMICOLON
 localVariableDeclarationExpression: typeName COLON variableName ASIGN expression;
 asignLocalVariableStatement: variableName ASIGN expression;
 returnStatement: RETURN expression?;
-ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE ELSE ifStatement* elseStatement?;
+ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE elseIfStatement* elseStatement?;
 elseIfStatement: ELSE IF LPAREN expression RPAREN LBRACE statement* RBRACE;
 elseStatement: ELSE LBRACE statement* RBRACE;
 
@@ -81,7 +81,7 @@ binaryOperator: ADD | SUB | MUL | DIV | MOD | ASIGN | CMPEQ | CMPNE | CMPGT | CM
 
 
 //Identifiers
-typeName: identifier ('.' identifier)* ARRAY_TYPE?;
+typeName: identifier ('.' identifier)* ARRAY_TYPE*;
 identifier: LETTER LETTER_OR_DIGIT*;
 memberName: LETTER LETTER_OR_DIGIT*;
 variableName: LETTER LETTER_OR_DIGIT*;
@@ -104,6 +104,8 @@ LBRACE: '{';
 RBRACE: '}';
 LPAREN: '(';
 RPAREN: ')';
+LBRACK: '[';
+RBRACK: ']';
 COLON: ':';
 SEMICOLON: ';';
 ARRAY_TYPE: '[]';
