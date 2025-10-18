@@ -10,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
+import java.util.Optional;
 
 /**
  * @author tim
@@ -92,7 +93,7 @@ public class CastExpressionCompiler {
             insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
         }
         resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
-        return new Result(insnList, resultType);
+        return new Result(insnList, resultType, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
     }
 
     private boolean isTypeTrait(String typeName) {

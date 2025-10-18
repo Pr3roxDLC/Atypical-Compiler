@@ -28,7 +28,6 @@ traitMemberDeclaration: methodDeclaration;
 implDeclaration: IMPL itf=typeName FOR struct=typeName LBRACE implMemberDeclaration* RBRACE;
 implMemberDeclaration: methodImplementation;
 
-
 //Methods
 methodImplementation: methodSignature LBRACE statement* RBRACE;
 methodDeclaration: methodSignature SEMICOLON;
@@ -37,13 +36,15 @@ methodReturnTypeDeclaration: COLON typeName;
 parameterDeclaration: typeName COLON memberName;
 
 //Statements
-statement: localVariableDeclarationExpression SEMICOLON
+statement:
+      localVariableDeclarationExpression SEMICOLON
     | asignLocalVariableStatement SEMICOLON
     | expression SEMICOLON
     | returnStatement SEMICOLON
     | ifStatement
     | whileStatement;
-localVariableDeclarationExpression: typeName COLON variableName ASIGN expression;
+
+localVariableDeclarationExpression: typeName COLON variableName ASSIGN expression;
 asignLocalVariableStatement: variableName ASIGN expression;
 returnStatement: RETURN expression?;
 ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE elseIfStatement* elseStatement?;
@@ -51,41 +52,58 @@ elseIfStatement: ELSE IF LPAREN expression RPAREN LBRACE statement* RBRACE;
 elseStatement: ELSE LBRACE statement* RBRACE;
 whileStatement: WHILE LPAREN expression RPAREN LBRACE statement* RBRACE;
 
-//Expression
-expression:
-      terminalExpression
-    | left=expression arrayAccessExpression
+// =========================
+// Expression (Simplified Integration Tip)
+// =========================
+
+expression
+    : postfixExpression ((ADD | SUB | MUL | DIV | MOD | CMPEQ | CMPNE | CMPGT | CMPLT | ASSIGN) expression)?
+    ;
+
+postfixExpression
+    : primary postfixOperator*
+    ;
+
+postfixOperator
+    : DOT memberAccess
+    | arrayAccess
+    ;
+
+memberAccess
+    : memberName
+    | methodInvocation
+    ;
+
+methodInvocation
+    : memberName LPAREN argList? RPAREN
+    ;
+
+arrayAccess
+    : LBRACK expression RBRACK
+    ;
+
+primary
+    : literal
+    | memberOrVariableName
     | structInitializerExpression
     | castExpression
     | parenthesesExpression
-    | left=expression binaryExpression
-    | unaryExpression
-    | left= expression DOT memberAccessExpression   //didnt find a better way to do this we need this rule to allow
-    | memberAccessExpression;                       //things like "abc".replace();
+    ;
 
-arrayAccessExpression: LBRACK expression RBRACK;
+// =========================
+// Other Expression Forms
+// =========================
+
 structInitializerExpression: typeName LBRACE argList? RBRACE;
 parenthesesExpression: LPAREN expression RPAREN;
-castExpression: LPAREN typeName RPAREN expression; //TODO implement
-memberAccessExpression: primaryMemberAccess (DOT (fieldAccessExpression | methodInvocationExpression))*;
-primaryMemberAccess: fieldAccessExpression | methodInvocationExpression;
-fieldAccessExpression: memberName;
-methodInvocationExpression: memberName LPAREN argList?  RPAREN;
+castExpression: LPAREN typeName RPAREN expression;
 argList: expression (COMMA expression)*;
-binaryExpression: op=binaryOperator right=expression;
-unaryExpression: unaryOperator right = expression;
-terminalExpression: literal | memberOrVariableName;
-literal: NUMBER | SINGLE_QUOTE string? SINGLE_QUOTE | DOUBLE_QUOTE string? DOUBLE_QUOTE;
+
+literal: NUMBER | SINGLE_QUOTE string? SINGLE_QUOTE | DOUBLE_QUOTE string? DOUBLE_QUOTE | NULL;
 string: LETTER;
 
-
-//Operators
-unaryOperator: NOT | INC | DEC;
-binaryOperator: ADD | SUB | MUL | DIV | MOD | ASIGN | CMPEQ | CMPNE | CMPGT | CMPLT;
-
-
 //Identifiers
-typeName: identifier ('.' identifier)* ARRAY_TYPE*;
+typeName: identifier (DOT identifier)* ARRAY_TYPE*;
 identifier: LETTER LETTER_OR_DIGIT*;
 memberName: LETTER LETTER_OR_DIGIT*;
 variableName: LETTER LETTER_OR_DIGIT*;
@@ -103,6 +121,7 @@ RETURN: 'return';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
+NULL: 'null';
 
 //Reserved Chars
 LBRACE: '{';
@@ -125,23 +144,20 @@ SUB: '-';
 MUL: '*';
 DIV: '/';
 MOD: '%';
-ASIGN: '=';
+ASSIGN: '=';
 CMPLT: '<';
 CMPGT: '>';
 CMPEQ: '==';
 CMPNE: '!=';
 
-
 NOT: '!';
 INC: '++';
 DEC: '--';
 
-
 //REGEX
-NUMBER : [0-9]+;
-LETTER : [a-zA-Z]+ ;
+NUMBER: [0-9]+;
+LETTER: [a-zA-Z]+;
 LETTER_OR_DIGIT: LETTER | NUMBER;
 
 //Ignore whitespace
-WS : [ \t\r\n]+ -> skip ;
-
+WS: [ \t\r\n]+ -> skip;

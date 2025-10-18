@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import static me.pr3.atypical.compiler.expression.ExpressionCompiler.*;
 
@@ -40,7 +41,7 @@ public class StructInitializerExpressionCompiler {
             insnList.add(new InsnNode(Opcodes.ACONST_NULL));
             desc.append(")V");
             insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", desc.toString()));
-            return new Result(insnList, typeDesc);
+            return new Result(insnList, typeDesc, Optional.empty(), SourceType.UNKNOWN);
         }else {
             String arrayType = typeDesc.substring(1);
             boolean primitive = TypeUtil.isPrimitiveType(arrayType);
@@ -70,7 +71,7 @@ public class StructInitializerExpressionCompiler {
                     }
                 }
             }
-            return new Result(insnList, typeDesc);
+            return new Result(insnList, typeDesc, Optional.empty(), SourceType.UNKNOWN);
         }
     }
 }

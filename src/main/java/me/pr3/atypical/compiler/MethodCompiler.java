@@ -47,11 +47,10 @@ public class MethodCompiler {
             // instance method: slot 0 is `this`
             addLocalVar("L" + node.name + ";", "this");
         }
-        for (int i = 0; i < argTypes.length; i++) {
-            org.objectweb.asm.Type t = argTypes[i];
-            String desc = t.getDescriptor();
-            addLocalVar(desc, "param" + i);
-            // wide types (long/double) are accounted for inside addLocalVar
+        for (ParameterDeclarationContext parameterDeclarationContext : value.methodSignature().parameterDeclaration()) {
+            String paramType = TypeUtil.toDesc(parameterDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName));
+            String paramName = parameterDeclarationContext.memberName().getText();
+            addLocalVar(paramType, paramName);
         }
 
         methodNode.instructions.add(startLabel);

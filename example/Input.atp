@@ -1,48 +1,85 @@
 import java.lang.String as String;
 import java.lang.System as System;
+import java.util.List as List;
 
-main(String[]: args){
-    String: str = "";
-}
-
-otherMethod(): String {
-    return "HelloWorld";
-}
-
-
-module List {
+module DemoApp {
     struct {
-        int: x;
+        int: counter;
+        String: message;
     }
 
     impl {
-        getInt(): int {
-            return this.x;
+        init() {
+            int: counter = 0;
+            String: message = 'A';
+            this.counter = counter;
+            this.message = message;
         }
-        setInt(int: i) {
+
+        increment() {
+            this.counter = this.counter + 1;
         }
-        getAndSetInt(List: l): int {
-            return 100;
+
+        printStatus() {
+            System.out.println(this.message);
+            System.out.println(this.counter);
+        }
+
+        runLoop() {
+            int: i = 0;
+            while (i < 3) {
+                this.increment();
+                i = i + 1;
+            }
+        }
+
+        conditionalExample() {
+            if (this.counter > 2) {
+                this.message = 'B';
+            } else if (this.counter == 2) {
+                this.message = 'C';
+            } else {
+                this.message = 'D';
+            }
         }
     }
 }
 
-trait Cloneable {
-    clone(): List;
+struct Data {
+    int: id;
+    String: name;
 }
 
-trait Greetable {
-    greet();
+trait Printable {
+    print();
 }
 
-impl Cloneable for List {
-    clone(): List {
-        return List{this.x};
+impl Printable for Data {
+    print() {
+        System.out.println(this.id);
+        System.out.println(this.name);
     }
 }
 
-impl Greetable for String {
-    greet(){
-        System.out.println("Hello");
+impl Printable for DemoApp {
+    print() {
+        System.out.println(this.counter);
+        System.out.println(this.message);
+    }
+}
+
+main(String[]: args) {
+    DemoApp: app = DemoApp { };
+    app.init();
+    app.runLoop();
+    app.conditionalExample();
+    app.printStatus();
+
+    Data: d = Data { 1, 'X' };
+    d.print();
+
+    List: list = null;
+    if (list == null) {
+        System.out.println('Z');
     }
 }

@@ -138,7 +138,7 @@ public class StructureCompiler {
         }else {
             classNode = new ClassNode();
             classNode.access = Opcodes.ACC_PUBLIC;
-            classNode.version = Opcodes.V1_8;
+            classNode.version = Opcodes.V17;
             classNode.name = trimmed;
             classNode.methods = new ArrayList<>();
             classNode.superName= "java/lang/Object";
@@ -161,7 +161,7 @@ public class StructureCompiler {
 
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC;
-        classNode.version = Opcodes.V1_8;
+        classNode.version = Opcodes.V17;
         classNode.name = className;
         classNode.methods = new ArrayList<>();
         classNode.superName = "java/lang/Object";
@@ -187,7 +187,7 @@ public class StructureCompiler {
     private void generateInterfaceFromTrait(TraitDeclarationContext context, String fileName){
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT;
-        classNode.version = Opcodes.V1_8;
+        classNode.version = Opcodes.V17;
         classNode.name = context.typeName().getText();
         classNode.methods = new ArrayList<>();
         classNode.superName = "java/lang/Object";
@@ -206,7 +206,7 @@ public class StructureCompiler {
 
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC;
-        classNode.version = Opcodes.V1_8;
+        classNode.version = Opcodes.V17;
         classNode.name = typeName;
         classNode.superName = "java/lang/Object";
         classNode.methods = new ArrayList<>();

@@ -46,9 +46,6 @@ public class StatementCompiler {
             ExpressionContext expression = context.expression();
             Result expressionResult = compiler.compileExpression(expression);
             insnList.add(expressionResult.insnList());
-            if (!expressionResult.returnType().equals("V")) {
-                insnList.add(new InsnNode(Opcodes.POP));
-            }
         }
         if (context.returnStatement() != null) {
             ReturnStatementContext returnStatement = context.returnStatement();

@@ -1,5 +1,7 @@
 package me.pr3.atypical.compiler.util;
 
+import org.objectweb.asm.Type;
+
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -106,6 +108,10 @@ public class TypeUtil {
         }else {
             return "(" + parameterTypes + ")V";
         }
+    }
+
+    public static String getReturnType(String methodDesc){
+        return methodDesc.split("\\)")[1];
     }
 
     public static boolean isPrimitiveType(String type) {
