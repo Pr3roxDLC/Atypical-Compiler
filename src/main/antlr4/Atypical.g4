@@ -41,13 +41,15 @@ statement: localVariableDeclarationExpression SEMICOLON
     | asignLocalVariableStatement SEMICOLON
     | expression SEMICOLON
     | returnStatement SEMICOLON
-    | ifStatement;
+    | ifStatement
+    | whileStatement;
 localVariableDeclarationExpression: typeName COLON variableName ASIGN expression;
 asignLocalVariableStatement: variableName ASIGN expression;
 returnStatement: RETURN expression?;
 ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE elseIfStatement* elseStatement?;
 elseIfStatement: ELSE IF LPAREN expression RPAREN LBRACE statement* RBRACE;
 elseStatement: ELSE LBRACE statement* RBRACE;
+whileStatement: WHILE LPAREN expression RPAREN LBRACE statement* RBRACE;
 
 //Expression
 expression:
@@ -100,6 +102,7 @@ AS: 'as';
 RETURN: 'return';
 IF: 'if';
 ELSE: 'else';
+WHILE: 'while';
 
 //Reserved Chars
 LBRACE: '{';

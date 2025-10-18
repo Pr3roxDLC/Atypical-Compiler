@@ -64,6 +64,10 @@ public class StatementCompiler {
             IfStatementCompiler ifStatementCompiler = new IfStatementCompiler(this);
             insnList.add(ifStatementCompiler.compileIfStatement(context.ifStatement()));
         }
+        if(context.whileStatement() != null){
+            WhileStatementCompiler whileStatementCompiler = new WhileStatementCompiler(this);
+            insnList.add(whileStatementCompiler.compileWhileStatement(context.whileStatement()));
+        }
         return insnList;
     }
 

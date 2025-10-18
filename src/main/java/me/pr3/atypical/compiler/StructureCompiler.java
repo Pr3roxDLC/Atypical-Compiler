@@ -101,7 +101,7 @@ public class StructureCompiler {
             for (ImplDeclarationContext impl : entry.getValue()) {
                 String implementedTraitName = imports.get(fileName).getOrDefault(impl.itf.getText(), impl.itf.getText());
                 String structName = imports.get(fileName).getOrDefault(impl.struct.getText(), impl.struct.getText());
-                String implClassName = structName + "$" + implementedTraitName;
+                String implClassName = implementedTraitName +  "$" + structName.replace("/", "_");
                 for (ImplMemberDeclarationContext member : impl.implMemberDeclaration()) {
                     MethodCompiler methodCompiler = new MethodCompiler(this);
                     methodCompiler.compileMethod(fileName, member.methodImplementation(), implClassName);
@@ -156,8 +156,8 @@ public class StructureCompiler {
     }
 
     private void generateClassFromImpl(ImplDeclarationContext context, String fileName){
-        String className = imports.get(fileName).getOrDefault(context.struct.getText(), context.struct.getText())
-                + "$" + imports.get(fileName).getOrDefault(context.itf.getText(), context.itf.getText());
+        String className = imports.get(fileName).getOrDefault(context.itf.getText(), context.itf.getText())
+                + "$" + imports.get(fileName).getOrDefault(context.struct.getText(), context.struct.getText()).replace("/", "_");
 
         ClassNode classNode = new ClassNode();
         classNode.access = Opcodes.ACC_PUBLIC;
@@ -301,7 +301,7 @@ public class StructureCompiler {
                         implDeclarationContext.struct.getText());
                 String traitTypeName = imports.get(entry.getKey()).getOrDefault(implDeclarationContext.itf.getText(),
                         implDeclarationContext.itf.getText());
-                String implClassName = structTypeName + "$" + traitTypeName;
+                String implClassName = traitTypeName + "$" + structTypeName.replace("/", "_");
                 if(implClassName.equals(className))return true;
             }
         }

@@ -104,7 +104,7 @@ public class MemberAccessExpressionCompiler {
                     methodName,
                     desc.toString());
             if(invokedTraitMethod != null){
-                String implClassName = owner + "$" + traitClass.name;
+                String implClassName = traitClass.name + "$" + owner.replace('/', '_');
                 String implClassConstructorDesc = "(" + TypeUtil.toDesc(owner) + ")V";
                 insnList.add(new TypeInsnNode(Opcodes.NEW, implClassName));
                 insnList.add(new InsnNode(Opcodes.DUP));

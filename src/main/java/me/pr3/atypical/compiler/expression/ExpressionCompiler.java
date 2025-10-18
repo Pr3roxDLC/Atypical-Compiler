@@ -27,6 +27,23 @@ public class ExpressionCompiler {
     public Result compileExpression(ExpressionContext context) {
         InsnList insnList = new InsnList();
         String resultType = "V";
+        if(context.unaryExpression() != null){
+            if(context.unaryExpression().unaryOperator().NOT() != null){
+                Result expressionResult = compileExpression(context.unaryExpression().expression());
+                insnList.add(expressionResult.insnList);
+                if(!expressionResult.returnType.equals("Z"))
+                    throw new IllegalStateException("Unary NOT operator can only be applied to boolean types, got: " + expressionResult.returnType);
+                LabelNode trueLabel = new LabelNode();
+                LabelNode falseLabel = new LabelNode();
+                insnList.add(new JumpInsnNode(Opcodes.IFEQ, trueLabel));
+                insnList.add(new InsnNode(Opcodes.ICONST_0));
+                insnList.add(new JumpInsnNode(Opcodes.GOTO, falseLabel));
+                insnList.add(trueLabel);
+                insnList.add(new InsnNode(Opcodes.ICONST_1));
+                insnList.add(falseLabel);
+                resultType = "Z";
+                }
+        }
         if (context.binaryExpression() != null) {
             Result leftResult = compileExpression(context.left);
             insnList.add(leftResult.insnList);
@@ -64,7 +81,7 @@ public class ExpressionCompiler {
                         throw new IllegalStateException("Reserved keyword 'this' not allowed in non static methods");
                     }
                     if(structureCompiler.isClassNameImplClass(methodCompiler.className)){
-                        String type = TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className.split("\\$")[0]));
+                        String type = TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className.split("\\$")[1].replace("_", "/")));
                         insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
                         insnList.add(new FieldInsnNode(Opcodes.GETFIELD, methodCompiler.className, "this_", type));
                         resultType = type;

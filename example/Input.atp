@@ -2,10 +2,7 @@ import java.lang.String as String;
 import java.lang.System as System;
 
 main(String[]: args){
-    String[]: strings = String[]{"Hello", "World"};
-    if(((obj)strings[0]).equals((obj)"Hello")){
-        System.out.println(strings[1]);
-    }
+    String: str = "";
 }
 
 otherMethod(): String {

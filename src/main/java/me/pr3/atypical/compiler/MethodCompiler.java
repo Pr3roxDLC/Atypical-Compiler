@@ -24,9 +24,11 @@ public class MethodCompiler {
     public LabelNode endLabel = new LabelNode();
     public String fileName = "";
     public String className = "";
-    public MethodCompiler(StructureCompiler parent){
+
+    public MethodCompiler(StructureCompiler parent) {
         this.structureCompiler = parent;
     }
+
     public void compileMethod(String fileName, MethodImplementationContext value) {
         compileMethod(fileName, value, fileName.replace(".atp", ""));
     }
@@ -38,6 +40,20 @@ public class MethodCompiler {
         this.methodNode = ClassNodeUtil.getMethodNodeByNameAndDescriptor(node,
                 value.methodSignature().memberName().getText(),
                 TypeUtil.extractMethodDescriptor(value.methodSignature(), structureCompiler.imports.get(fileName)));
+
+        // Add local vars for parameters (and `this` for non-static methods)
+        org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getArgumentTypes(methodNode.desc);
+        if ((methodNode.access & Opcodes.ACC_STATIC) == 0 && !structureCompiler.isClassNameImplClass(className)) {
+            // instance method: slot 0 is `this`
+            addLocalVar("L" + node.name + ";", "this");
+        }
+        for (int i = 0; i < argTypes.length; i++) {
+            org.objectweb.asm.Type t = argTypes[i];
+            String desc = t.getDescriptor();
+            addLocalVar(desc, "param" + i);
+            // wide types (long/double) are accounted for inside addLocalVar
+        }
+
         methodNode.instructions.add(startLabel);
         StatementCompiler statementCompiler = new StatementCompiler(structureCompiler, this);
         for (StatementContext statementContext : value.statement()) {
@@ -48,30 +64,36 @@ public class MethodCompiler {
     }
 
 
-        public int addLocalVar(String type, String name){
+    public int addLocalVar(String type, String name){
+        int index = localVars.size();
         localVars.add(type);
-        int index = localVars.size() - 1;
+        // If type occupies two slots (long/double), add a placeholder for the second slot
+        org.objectweb.asm.Type t = org.objectweb.asm.Type.getType(type);
+        if (t.getSize() == 2) {
+            localVars.add("TOP"); // placeholder for second slot
+        }
         localVarNameMapping.put(name, index);
         methodNode.localVariables.add(new LocalVariableNode(name, type, null, startLabel, endLabel, index));
         return index;
     }
 
-    public String getLocalVar(int i){
+    public String getLocalVar(int i) {
         return localVars.get(i);
     }
 
-    public String getLocalVarTypeByName(String name){
+    public String getLocalVarTypeByName(String name) {
         return localVars.get(localVarNameMapping.get(name));
     }
 
-    public boolean containsLocalVarWithName(String name){
+    public boolean containsLocalVarWithName(String name) {
         return localVarNameMapping.containsKey(name);
     }
-    public int getLocalVarIndexByName(String name){
+
+    public int getLocalVarIndexByName(String name) {
         return localVarNameMapping.get(name);
     }
 
-    public String fullyQualifyType(String type){
+    public String fullyQualifyType(String type) {
         return structureCompiler.imports.get(this.fileName).getOrDefault(type, type);
     }
 

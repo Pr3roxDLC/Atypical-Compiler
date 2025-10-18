@@ -1,0 +1,19 @@
+import java.lang.String as String;
+import java.lang.System as System;
+
+main(String[]: args){
+    String: str = "aaa";
+    while(!str.test()){
+        System.out.println("NotBlank");
+    }
+}
+
+trait Testable {
+    test(): bool;
+}
+
+impl Testable for String {
+    test(): bool {
+        return this.isBlank();
+    }
+}

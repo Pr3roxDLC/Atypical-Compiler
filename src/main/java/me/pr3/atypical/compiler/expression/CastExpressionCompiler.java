@@ -20,23 +20,23 @@ public class CastExpressionCompiler {
     private final StructureCompiler structureCompiler;
     private final MethodCompiler methodCompiler;
 
-    public CastExpressionCompiler(ExpressionCompiler expressionCompiler){
+    public CastExpressionCompiler(ExpressionCompiler expressionCompiler) {
         this.expressionCompiler = expressionCompiler;
         structureCompiler = expressionCompiler.structureCompiler;
         methodCompiler = expressionCompiler.methodCompiler;
     }
 
-    public Result compileCastExpression(AtypicalParser.CastExpressionContext context){
+    public Result compileCastExpression(AtypicalParser.CastExpressionContext context) {
         InsnList insnList = new InsnList();
         String resultType = "V";
         String castTypeName = context.typeName().getText();
         String fullyQualifiedTypeName = TypeUtil.extractTypeNameFromDescriptor(TypeUtil.toDesc(castTypeName, structureCompiler.imports.get(methodCompiler.fileName)));
         Result expressionResult = expressionCompiler.compileExpression(context.expression());
         insnList.add(expressionResult.insnList());
-        if(!isTypeTrait(fullyQualifiedTypeName)) {
+        if (!isTypeTrait(fullyQualifiedTypeName)) {
             insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
 
-        }else {
+        } else {
             //Generates the following java code:
             /*
             (Cloneable)Class.forName(x.getClass().getName().replace(".", "/") + "$Cloneable").getDeclaredConstructor(x.getClass()).newInstance(x);
@@ -52,15 +52,20 @@ public class CastExpressionCompiler {
             insnList.add(new TypeInsnNode(Opcodes.NEW, "java/lang/StringBuffer"));
             insnList.add(new InsnNode(Opcodes.DUP));
             insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "()V"));
+            // first append the "$" + fullyQualifiedTypeName
+            insnList.add(new LdcInsnNode(fullyQualifiedTypeName.replace("/", ".") + "$"));
+            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;"));
+            // then append the object's class name (getClass().getName().replace(".", "/"))
             insnList.add(new InsnNode(Opcodes.SWAP));
             insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;"));
             insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;"));
             insnList.add(new LdcInsnNode("."));
-            insnList.add(new LdcInsnNode("/"));
-            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "replace", "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;"));
-            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;"));
-            insnList.add(new LdcInsnNode("$" + fullyQualifiedTypeName.replace("/", ".")));
-            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;"));
+            insnList.add(new LdcInsnNode("_"));
+            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "replace",
+                    "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;"));
+            insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                    "(Ljava/lang/String;)Ljava/lang/StringBuffer;"));
+            // toString and continue
             insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;"));
             insnList.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;"));
             insnList.add(new InsnNode(Opcodes.SWAP));
@@ -90,9 +95,9 @@ public class CastExpressionCompiler {
         return new Result(insnList, resultType);
     }
 
-    private boolean isTypeTrait(String typeName){
+    private boolean isTypeTrait(String typeName) {
         ClassNode classNode = structureCompiler.generatedClassNodes.get(typeName);
-        if(classNode == null) classNode = ClassNodeUtil.loadClassNodeFromJDKCLasses(typeName);
+        if (classNode == null) classNode = ClassNodeUtil.loadClassNodeFromJDKCLasses(typeName);
         return Modifier.isInterface(classNode.access);
     }
 
