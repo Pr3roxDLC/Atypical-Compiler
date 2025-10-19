@@ -260,6 +260,9 @@ public class ExpressionCompiler {
             CastExpressionCompiler castExpressionCompiler = new CastExpressionCompiler(this);
             return castExpressionCompiler.compileCastExpression(context.castExpression());
         }
+        if(context.parenthesesExpression() != null){
+            return compileExpression(context.parenthesesExpression().expression());
+        }
         return null;
     }
 
