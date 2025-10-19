@@ -56,7 +56,7 @@ public class StructInitializerExpressionCompiler {
                 String type = TypeUtil.isArrayType(arrayType) ? arrayType : TypeUtil.extractTypeNameFromDescriptor(arrayType);
                 insnList.add(new TypeInsnNode(Opcodes.ANEWARRAY, type));
             }else {
-                insnList.add(new TypeInsnNode(Opcodes.NEWARRAY, arrayType));
+                insnList.add(new IntInsnNode(Opcodes.NEWARRAY, getArrayTypeOpcode(arrayType)));
             }
             if(structInitializerExpression.argList() != null){
                 for (int i = structInitializerExpression.argList().expression().size() - 1; i >= 0; i--) {
@@ -72,6 +72,29 @@ public class StructInitializerExpressionCompiler {
                 }
             }
             return new Result(insnList, typeDesc, Optional.empty(), SourceType.UNKNOWN);
+        }
+    }
+
+    public int getArrayTypeOpcode(String arrayType){
+        switch (arrayType) {
+            case "I":
+                return Opcodes.T_INT;
+            case "F":
+                return Opcodes.T_FLOAT;
+            case "D":
+                return Opcodes.T_DOUBLE;
+            case "J":
+                return Opcodes.T_LONG;
+            case "B":
+                return Opcodes.T_BYTE;
+            case "C":
+                return Opcodes.T_CHAR;
+            case "S":
+                return Opcodes.T_SHORT;
+            case "Z":
+                return Opcodes.T_BOOLEAN;
+            default:
+                throw new IllegalStateException("Unsupported array type: " + arrayType);
         }
     }
 }

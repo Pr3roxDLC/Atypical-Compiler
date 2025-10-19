@@ -43,9 +43,9 @@ public class MethodCompiler {
 
         // Add local vars for parameters (and `this` for non-static methods)
         org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getArgumentTypes(methodNode.desc);
-        if ((methodNode.access & Opcodes.ACC_STATIC) == 0 && !structureCompiler.isClassNameImplClass(className)) {
+        if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
             // instance method: slot 0 is `this`
-            addLocalVar("L" + node.name + ";", "this");
+                addLocalVar("L" + node.name + ";", "this");
         }
         for (ParameterDeclarationContext parameterDeclarationContext : value.methodSignature().parameterDeclaration()) {
             String paramType = TypeUtil.toDesc(parameterDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName));

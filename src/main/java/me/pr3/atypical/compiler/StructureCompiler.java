@@ -258,7 +258,7 @@ public class StructureCompiler {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         AtypicalParser parser = new AtypicalParser(tokens);
         FileContext fileContext = parser.file();
-
+        imports.put(fileName, new HashMap<>());
         for (ImportedClassContext importedClass : fileContext.imports().importedClass()) {
             if(!imports.containsKey(fileName)) {
                 imports.put(fileName, new HashMap<>(Map.of(importedClass.alias.getText(), importedClass.class_.getText().replace(".", "/"))));

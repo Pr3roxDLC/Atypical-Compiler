@@ -5,7 +5,21 @@ main(String[]: args){
     LinkedList: list = LinkedList{(Node)null, 0};
     list.add("Hello");
     list.add("World");
-    System.out.println(list.get(0));
+    list.add("Im");
+    list.add("Tim");
+    Iterator: it = list.iterator();
+    while(it.hasNext()){
+        System.out.println(it.next());
+    }
+}
+
+trait Iterator {
+    hasNext(): bool;
+    next(): String;
+}
+
+trait Iterable {
+    iterator(): Iterator;
 }
 
 module LinkedList {
@@ -16,6 +30,7 @@ module LinkedList {
 
     impl {
             add(String: content) {
+                this.size = this.size + 1;
                 if(this.head == null){
                     this.head = Node{(Node)null, content};
                 } else {
@@ -35,6 +50,9 @@ module LinkedList {
                 }
                 return current.content;
             }
+            size(): int {
+                return this.size;
+            }
         }
 }
 
@@ -42,5 +60,27 @@ module Node {
     struct {
         Node: next;
         String: content;
+    }
+}
+
+module LinkedListIter {
+    struct {
+        Node: current;
+    }
+}
+
+impl Iterator for LinkedListIter{
+    next(): String {
+        this.current = this.current.next;
+        return this.current.content;
+    }
+    hasNext(): bool {
+        return this.current.next != (Node)null;
+    }
+}
+
+impl Iterable for LinkedList {
+    iterator(): Iterator {
+        return (Iterator)LinkedListIter{this.head};
     }
 }
