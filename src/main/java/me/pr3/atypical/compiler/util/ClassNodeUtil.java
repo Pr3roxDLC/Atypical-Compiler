@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author tim
@@ -20,13 +21,26 @@ public class ClassNodeUtil {
         return null;
     }
 
-    public static MethodNode getMethodNodeByNameAndParameterTypes(ClassNode classNode, String name, String parameterTypes){
+    public static MethodNode getMethodNodeByNameAndParameterTypes(ClassNode classNode, String name, List<String> parameterTypes){
         for (MethodNode method : classNode.methods) {
             if(method.name.equals(name)){
-                String tempDesc = "(" + parameterTypes + ")V";
-                Type tempMethodDesc = Type.getMethodType(tempDesc);
                 Type methodDesc = Type.getMethodType(method.desc);
-                if(Arrays.equals(tempMethodDesc.getArgumentTypes(), methodDesc.getArgumentTypes()))return method;
+                List<String> methodParamTypeList = Arrays.stream(methodDesc.getArgumentTypes())
+                        .map(Type::getDescriptor)
+                        .toList();
+                boolean allMatch = true;
+                if(methodParamTypeList.size() != parameterTypes.size()){continue;}
+                for (int i = 0; i < parameterTypes.size(); i++) {
+                    String parameterType = parameterTypes.get(i);
+                    if (!parameterType.equals(methodParamTypeList.get(i))) {
+                        if (!parameterType.equals("U")) {
+                            allMatch = false;
+                        }
+                    }
+                }
+                if(allMatch){
+                    return method;
+                }
             }
         }
         return null;

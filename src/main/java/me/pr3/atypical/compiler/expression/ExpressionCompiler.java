@@ -9,10 +9,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
@@ -126,12 +123,12 @@ public class ExpressionCompiler {
                 if (memberAccessContext.methodInvocation() != null) {
                     MethodInvocationContext methodInvocationContext = memberAccessContext.methodInvocation();
                     String methodName = methodInvocationContext.memberName().getText();
-                    StringBuilder desc = new StringBuilder();
+                    List<String> argTypes = new ArrayList<>();
                     if (methodInvocationContext.argList() != null) {
                         for (ExpressionContext argExpression : methodInvocationContext.argList().expression()) {
                             Result argExpressionResult = compileExpression(argExpression);
                             insnList.add(argExpressionResult.insnList());
-                            desc.append(argExpressionResult.returnType);
+                            argTypes.add(argExpressionResult.returnType);
                         }
                     }
                     String owner;
@@ -153,13 +150,13 @@ public class ExpressionCompiler {
                     MethodNode invokedMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
                             owningClassNode,
                             methodName,
-                            desc.toString());
+                            argTypes);
                     if (invokedMethod != null) {
                         insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
                         returnType = TypeUtil.getReturnType(invokedMethod.desc);
                         sourceType = SourceType.METHOD;
                     }else {
-                        Result traitImplInvocationResult = getTraitImplMethodInvocation(methodName, desc, owner);
+                        Result traitImplInvocationResult = getTraitImplMethodInvocation(methodName, argTypes, owner);
                         insnList.add(traitImplInvocationResult.insnList());
                         returnType = traitImplInvocationResult.returnType;
                         sourceType = SourceType.METHOD;
@@ -219,7 +216,7 @@ public class ExpressionCompiler {
             if(context.literal().NULL() != null){
                 InsnList insnList = new InsnList();
                 insnList.add(new InsnNode(Opcodes.ACONST_NULL));
-                return new Result(insnList, "Ljava/lang/Object;", Optional.empty(), SourceType.LITERAL);
+                return new Result(insnList, "U", Optional.empty(), SourceType.LITERAL);
             }
         }
         if(context.memberOrVariableName() != null){
@@ -265,16 +262,19 @@ public class ExpressionCompiler {
         return null;
     }
 
-    private Result getTraitImplMethodInvocation(String methodName, StringBuilder desc, String owner) {
+    private Result getTraitImplMethodInvocation(String methodName, List<String> argTypes, String owner) {
         Set<String> implementedTraits = structureCompiler.implementedTraitsForStruct
                 .getOrDefault(owner, new HashSet<>());
+        if(isTypeTrait(owner)){
+            implementedTraits.add(owner);
+        }
         InsnList insnList = new InsnList();
         for (String trait : implementedTraits) {
             ClassNode traitClass = this.structureCompiler.generatedClassNodes.get(trait);
             MethodNode invokedTraitMethod = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(
                     traitClass,
                     methodName,
-                    desc.toString());
+                    argTypes);
             if(invokedTraitMethod != null){
                 String implClassName =  traitClass.name + "$" + owner.replace("/", "_");
                 String implClassConstructorDesc = "(" + TypeUtil.toDesc(owner) + ")V";

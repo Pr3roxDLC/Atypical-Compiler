@@ -2,7 +2,7 @@ import java.lang.String as String;
 import java.lang.System as System;
 
 main(String[]: args){
-    LinkedList: list = LinkedList{(Node)null, 0};
+    LinkedList: list = LinkedList{null, 0};
     list.add("Hello");
     list.add("World");
     list.add("Im");
@@ -32,13 +32,13 @@ module LinkedList {
             add(String: content) {
                 this.size = this.size + 1;
                 if(this.head == null){
-                    this.head = Node{(Node)null, content};
+                    this.head = Node{null, content};
                 } else {
                     Node: current = this.head;
                     while(current.next != null) {
                         current = current.next;
                     }
-                    current.next = Node{(Node)null, content};
+                    current.next = Node{null, content};
                 }
             }
             get(int: index): String {
@@ -75,7 +75,7 @@ impl Iterator for LinkedListIter{
         return this.current.content;
     }
     hasNext(): bool {
-        return this.current.next != (Node)null;
+        return this.current.next != null;
     }
 }
 

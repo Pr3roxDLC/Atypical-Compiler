@@ -1,10 +1,12 @@
 package me.pr3.atypical.compiler.expression;
 
+import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import me.pr3.atypical.generated.AtypicalParser;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,19 +30,20 @@ public class StructInitializerExpressionCompiler {
             String fullyQualifiedTypeName = TypeUtil.extractTypeNameFromDescriptor(typeDesc);
             insnList.add(new TypeInsnNode(Opcodes.NEW, fullyQualifiedTypeName));
             insnList.add(new InsnNode(Opcodes.DUP));
-            StringBuilder desc = new StringBuilder("(");
+            List<String> argTypes = new ArrayList<>();
             if (structInitializerExpression.argList() != null) {
                 AtypicalParser.ArgListContext argList = structInitializerExpression.argList();
                 for (AtypicalParser.ExpressionContext expression : argList.expression()) {
                     Result expressionResult = expressionCompiler.compileExpression(expression);
                     insnList.add(expressionResult.insnList());
-                    desc.append(expressionResult.returnType());
+                    argTypes.add(expressionResult.returnType());
                 }
             }
-            desc.append("Ljava/lang/Void;");
+            argTypes.add("Ljava/lang/Void;");
             insnList.add(new InsnNode(Opcodes.ACONST_NULL));
-            desc.append(")V");
-            insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", desc.toString()));
+            ClassNode owner = expressionCompiler.structureCompiler.generatedClassNodes.get(fullyQualifiedTypeName);
+            MethodNode methodNode = ClassNodeUtil.getMethodNodeByNameAndParameterTypes(owner, "<init>", argTypes);
+            insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, fullyQualifiedTypeName, "<init>", methodNode.desc));
             return new Result(insnList, typeDesc, Optional.empty(), SourceType.UNKNOWN);
         }else {
             String arrayType = typeDesc.substring(1);
