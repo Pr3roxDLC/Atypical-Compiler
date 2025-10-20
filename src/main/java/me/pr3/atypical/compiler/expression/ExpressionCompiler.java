@@ -2,10 +2,11 @@ package me.pr3.atypical.compiler.expression;
 
 import me.pr3.atypical.compiler.MethodCompiler;
 import me.pr3.atypical.compiler.StructureCompiler;
+import me.pr3.atypical.compiler.typing.Descriptor;
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
@@ -26,7 +27,7 @@ public class ExpressionCompiler {
     }
 
     public Result compileExpression(ExpressionContext context) {
-        String returnType = "V";
+        Type returnType = Type.VOID;
         String returnFieldName = null;
 
         if(context.CMPLT() != null ||context.CMPGT() != null || context.CMPNE() != null || context.CMPEQ() != null) {
@@ -48,14 +49,14 @@ public class ExpressionCompiler {
             if(lhs.sourceType == SourceType.LOCAL_VARIABLE){
                 int localVarIndex = methodCompiler.getLocalVarIndexByName(lhs.memberName.orElseThrow());
                 insnList.add(new VarInsnNode(
-                        switch (rhs.returnType) {
-                            case "I", "Z" -> Opcodes.ISTORE;
+                        switch (rhs.returnType.getKind()) {
+                            case Type.Kind.INT, Type.Kind.BOOLEAN -> Opcodes.ISTORE;
                             default -> Opcodes.ASTORE;
                         }, localVarIndex));
             }
             if(lhs.sourceType == SourceType.STRUCT_MEMBER){
                 String memberName = lhs.memberName.orElseThrow();
-                String typeName = TypeUtil.extractTypeNameFromDescriptor(lhs.returnType);
+                String typeName = lhs.returnType.getInternalName();
                 FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(getClassNodeByName(typeName), memberName);
                 insnList.add(new FieldInsnNode(
                         Opcodes.PUTFIELD,
@@ -65,7 +66,7 @@ public class ExpressionCompiler {
                 ));
             }
             if(lhs.sourceType == SourceType.ARRAY){
-                String arrayType = TypeUtil.getUnderlyingTypeOfArray(TypeUtil.extractTypeNameFromDescriptor(lhs.returnType));
+                String arrayType = lhs.returnType.getUnderlyingArrayType().getInternalName();
                 boolean primitive = TypeUtil.isPrimitiveType(arrayType);
                 if (primitive) {
                     insnList.add(new InsnNode(Opcodes.IASTORE));
@@ -80,7 +81,7 @@ public class ExpressionCompiler {
     }
 
     public Result compilePostfixExpression(PostfixExpressionContext context, boolean isAssignLhs) {
-        String returnType = "V";
+        Type returnType = Type.VOID;
         String returnFieldName = null;
         SourceType sourceType = SourceType.UNKNOWN;
         InsnList insnList = new InsnList();
@@ -98,23 +99,23 @@ public class ExpressionCompiler {
             if (postfixOperatorContext.DOT() != null) {
                 MemberAccessContext memberAccessContext = postfixOperatorContext.memberAccess();
                 if (memberAccessContext.memberName() != null) {
-                    if (TypeUtil.isTypePrefixedDesc(returnType)) {
-                        String typeDesc = TypeUtil.fromTypePrefixed(returnType);
-                        String typeName = TypeUtil.extractTypeNameFromDescriptor(typeDesc);
+                    if (returnType.isStaticType()) {
+                        Type typeDesc = returnType.getTypeFromStaticType();
+                        String typeName = typeDesc.getInternalName();
                         FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(getClassNodeByName(typeName), memberAccessContext.memberName().getText());
                         //The last member access in the chain must not be done as it is just the field we want to assign to
                         if(i < postfixOperator.size() -1 || !isAssignLhs) {
                             insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, typeName, fieldNode.name, fieldNode.desc));
-                            returnType = fieldNode.desc;
+                            returnType = Type.fromDescriptor(fieldNode.desc);
                         }
                         returnFieldName = fieldNode.name;
                         sourceType = SourceType.STATIC_STRUCT_MEMBER;
                     } else {
-                        String typeName = TypeUtil.extractTypeNameFromDescriptor(returnType);
+                        String typeName =returnType.getInternalName();
                         FieldNode fieldNode = ClassNodeUtil.getFieldNodeByName(getClassNodeByName(typeName), memberAccessContext.memberName().getText());
                         if(i < postfixOperator.size() -1 || !isAssignLhs) {
                             insnList.add(new FieldInsnNode(Opcodes.GETFIELD, typeName, fieldNode.name, fieldNode.desc));
-                            returnType = fieldNode.desc;
+                            returnType = Type.fromDescriptor(fieldNode.desc);
                         }
                         returnFieldName = fieldNode.name;
                         sourceType = SourceType.STRUCT_MEMBER;
@@ -123,7 +124,7 @@ public class ExpressionCompiler {
                 if (memberAccessContext.methodInvocation() != null) {
                     MethodInvocationContext methodInvocationContext = memberAccessContext.methodInvocation();
                     String methodName = methodInvocationContext.memberName().getText();
-                    List<String> argTypes = new ArrayList<>();
+                    List<Type> argTypes = new ArrayList<>();
                     InsnList argEvaluationInstructions = new InsnList();
                     if (methodInvocationContext.argList() != null) {
                         for (ExpressionContext argExpression : methodInvocationContext.argList().expression()) {
@@ -134,12 +135,11 @@ public class ExpressionCompiler {
                     }
                     String owner;
                     int opcode;
-                    if (TypeUtil.isTypePrefixedDesc(returnType)) {
-                        String typeDesc = TypeUtil.fromTypePrefixed(returnType);
-                        owner = TypeUtil.extractTypeNameFromDescriptor(typeDesc);
+                    if (returnType.isStaticType()) {
+                        owner = returnType.getTypeFromStaticType().getInternalName();
                         opcode = Opcodes.INVOKESTATIC;
                     } else {
-                        owner = TypeUtil.extractTypeNameFromDescriptor(returnType);
+                        owner = returnType.getInternalName();
                         if(isTypeTrait(owner)){
                             opcode = Opcodes.INVOKEINTERFACE;
                         }
@@ -155,7 +155,7 @@ public class ExpressionCompiler {
                     if (invokedMethod != null) {
                         insnList.add(argEvaluationInstructions);
                         insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
-                        returnType = TypeUtil.getReturnType(invokedMethod.desc);
+                        returnType = Descriptor.fromString(invokedMethod.desc).getReturnType();
                         sourceType = SourceType.METHOD;
                     }else {
                         Result traitImplInvocationResult = getTraitImplMethodInvocation(methodName, argTypes, owner, argEvaluationInstructions);
@@ -170,12 +170,12 @@ public class ExpressionCompiler {
                 ArrayAccessContext arrayAccessContext = postfixOperatorContext.arrayAccess();
                 Result indexExpressionResult = compileExpression(arrayAccessContext.expression());
                 insnList.add(indexExpressionResult.insnList());
-                String arrayType = TypeUtil.getUnderlyingTypeOfArray(TypeUtil.extractTypeNameFromDescriptor(returnType));
-                boolean primitive = TypeUtil.isPrimitiveType(arrayType);
+                Type arrayType = returnType.getUnderlyingArrayType();
+                boolean primitive = arrayType.isPrimitiveType();
                 if(i < postfixOperator.size() -1 || !isAssignLhs) {
                     if (primitive) {
                         insnList.add(new InsnNode(Opcodes.IALOAD));
-                        returnType = "I";
+                        returnType = Type.INT;
                     } else {
                         insnList.add(new InsnNode(Opcodes.AALOAD));
                         returnType = arrayType;
@@ -207,18 +207,18 @@ public class ExpressionCompiler {
                 InsnList insnList = new InsnList();
                 int value = Integer.parseInt(context.literal().NUMBER().getText());
                 insnList.add(new IntInsnNode(Opcodes.BIPUSH, value));
-                return new Result(insnList, "I", Optional.empty(), SourceType.LITERAL);
+                return new Result(insnList, Type.INT, Optional.empty(), SourceType.LITERAL);
             }
             if(context.literal().STRING() != null){
                 InsnList insnList = new InsnList();
                 String value = context.literal().STRING().getText().replace("\"", "");
                 insnList.add(new LdcInsnNode(value));
-                return new Result(insnList, "Ljava/lang/String;", Optional.empty(), SourceType.LITERAL);
+                return new Result(insnList, Type.fromDescriptor("Ljava/lang/String;"), Optional.empty(), SourceType.LITERAL);
             }
             if(context.literal().NULL() != null){
                 InsnList insnList = new InsnList();
                 insnList.add(new InsnNode(Opcodes.ACONST_NULL));
-                return new Result(insnList, "U", Optional.empty(), SourceType.LITERAL);
+                return new Result(insnList, Type.UNKNOWN, Optional.empty(), SourceType.LITERAL);
             }
         }
         if(context.memberOrVariableName() != null){
@@ -226,18 +226,18 @@ public class ExpressionCompiler {
             if(methodCompiler.structureCompiler.isClassNameImplClass(methodCompiler.className) && memberName.equals("this")) {
                 //Special Case for the "this" keyword in impl as we need to capture this and use the "this_" variable instead
                 InsnList insnList = new InsnList();
-                String type = TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className.split("\\$")[1]));
+                Type type = Type.fromDescriptor(TypeUtil.toDesc(methodCompiler.fullyQualifyType(methodCompiler.className.split("\\$")[1])));
                 insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                insnList.add(new FieldInsnNode(Opcodes.GETFIELD, methodCompiler.className, "this_", type));
+                insnList.add(new FieldInsnNode(Opcodes.GETFIELD, methodCompiler.className, "this_", type.toString()));
                 return new Result(insnList, type, Optional.of("this_"), SourceType.STATIC_STRUCT_MEMBER);
             } else if(methodCompiler.containsLocalVarWithName(memberName)){
                 InsnList insnList = new InsnList();
                 int localVarIndex = methodCompiler.getLocalVarIndexByName(memberName);
-                String localVarType = methodCompiler.getLocalVarTypeByName(memberName);
+                Type localVarType = methodCompiler.getLocalVarTypeByName(memberName);
                 if(!isJustLocalVarAssignment) {
                     insnList.add(new VarInsnNode(
-                            switch (localVarType) {
-                                case "I", "Z" -> Opcodes.ILOAD;
+                            switch (localVarType.getKind()) {
+                                case Type.Kind.INT, Type.Kind.BOOLEAN -> Opcodes.ILOAD;
                                 default -> Opcodes.ALOAD;
                             }, localVarIndex));
                 }
@@ -245,7 +245,7 @@ public class ExpressionCompiler {
             }else if(isClassName(memberName)){
                 InsnList insnList = new InsnList();
                 String importMappedType = methodCompiler.fullyQualifyType(memberName);
-                return new Result(insnList, TypeUtil.toTypePrefixed(importMappedType), Optional.empty(), SourceType.STATIC_STRUCT_MEMBER);
+                return new Result(insnList, Type.fromInternalName(importMappedType).toStaticType(), Optional.empty(), SourceType.STATIC_STRUCT_MEMBER);
             } else {
                 throw new IllegalArgumentException("Invalid member name: " + memberName + " at: " + postfixExpressionContext.getText());
             }
@@ -264,7 +264,7 @@ public class ExpressionCompiler {
         return null;
     }
 
-    private Result getTraitImplMethodInvocation(String methodName, List<String> argTypes, String owner, InsnList argEvaluationInstructions) {
+    private Result getTraitImplMethodInvocation(String methodName, List<Type> argTypes, String owner, InsnList argEvaluationInstructions) {
         Set<String> implementedTraits = structureCompiler.implementedTraitsForStruct
                 .getOrDefault(owner, new HashSet<>());
         if(isTypeTrait(owner)){
@@ -287,7 +287,7 @@ public class ExpressionCompiler {
                 insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, implClassName, "<init>", implClassConstructorDesc));
                 insnList.add(argEvaluationInstructions);
                 insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, implClassName, invokedTraitMethod.name, invokedTraitMethod.desc));
-                return new Result(insnList, Type.getMethodType(invokedTraitMethod.desc).getReturnType().toString(), Optional.empty(), SourceType.STATIC_STRUCT_MEMBER);
+                return new Result(insnList, new Descriptor(invokedTraitMethod.desc).getReturnType(), Optional.empty(), SourceType.STATIC_STRUCT_MEMBER);
             }
         }
         return null;
@@ -318,7 +318,7 @@ public class ExpressionCompiler {
         UNKNOWN
     }
 
-    public record Result(InsnList insnList, String returnType, Optional<String> memberName, SourceType sourceType) {
+    public record Result(InsnList insnList, me.pr3.atypical.compiler.typing.Type returnType, Optional<String> memberName, SourceType sourceType) {
 
     }
 

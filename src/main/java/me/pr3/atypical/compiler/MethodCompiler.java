@@ -1,6 +1,7 @@
 package me.pr3.atypical.compiler;
 
 import me.pr3.atypical.compiler.statement.StatementCompiler;
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Label;
@@ -17,7 +18,7 @@ import static me.pr3.atypical.generated.AtypicalParser.*;
 public class MethodCompiler {
     public StructureCompiler structureCompiler;
 
-    public List<String> localVars = new ArrayList<>();//Holds the type of each local var (we do not reuse indices)
+    public List<Type> localVars = new ArrayList<>();//Holds the type of each local var (we do not reuse indices)
     public Map<String, Integer> localVarNameMapping = new HashMap<>();
 
     public MethodNode methodNode = null;
@@ -46,13 +47,13 @@ public class MethodCompiler {
         org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getArgumentTypes(methodNode.desc);
         if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
             // instance method: slot 0 is `this`
-                addLocalVar("L" + node.name + ";", "this");
+                addLocalVar(Type.fromInternalName(node.name), "this");
         }
         if(value.methodSignature().parameterList()!= null) {
             for (ParameterDeclarationContext parameterDeclarationContext : value.methodSignature().parameterList().parameterDeclaration()) {
                 String paramType = TypeUtil.toDesc(parameterDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName));
                 String paramName = parameterDeclarationContext.memberName().getText();
-                addLocalVar(paramType, paramName);
+                addLocalVar(Type.fromDescriptor(paramType), paramName);
             }
         }
 
@@ -66,24 +67,23 @@ public class MethodCompiler {
     }
 
 
-    public int addLocalVar(String type, String name){
+    public int addLocalVar(Type type, String name){
         int index = localVars.size();
         localVars.add(type);
         // If type occupies two slots (long/double), add a placeholder for the second slot
-        org.objectweb.asm.Type t = org.objectweb.asm.Type.getType(type);
-        if (t.getSize() == 2) {
-            localVars.add("TOP"); // placeholder for second slot
+        if (type.getSize() == 2) {
+            localVars.add(Type.INVALID); // placeholder for second slot
         }
         localVarNameMapping.put(name, index);
-        methodNode.localVariables.add(new LocalVariableNode(name, type, null, startLabel, endLabel, index));
+        methodNode.localVariables.add(new LocalVariableNode(name, type.toString(), null, startLabel, endLabel, index));
         return index;
     }
 
-    public String getLocalVar(int i) {
+    public Type getLocalVar(int i) {
         return localVars.get(i);
     }
 
-    public String getLocalVarTypeByName(String name) {
+    public Type getLocalVarTypeByName(String name) {
         return localVars.get(localVarNameMapping.get(name));
     }
 

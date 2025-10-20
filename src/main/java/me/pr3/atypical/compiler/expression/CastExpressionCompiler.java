@@ -3,6 +3,7 @@ package me.pr3.atypical.compiler.expression;
 import me.pr3.atypical.compiler.MethodCompiler;
 import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.expression.ExpressionCompiler.Result;
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import me.pr3.atypical.generated.AtypicalParser;
@@ -29,7 +30,7 @@ public class CastExpressionCompiler {
 
     public Result compileCastExpression(AtypicalParser.CastExpressionContext context) {
         InsnList insnList = new InsnList();
-        String resultType = "V";
+        Type resultType = Type.VOID;
         String castTypeName = context.typeName().getText();
         String fullyQualifiedTypeName = TypeUtil.extractTypeNameFromDescriptor(TypeUtil.toDesc(castTypeName, structureCompiler.imports.get(methodCompiler.fileName)));
         Result expressionResult = expressionCompiler.compileExpression(context.expression());
@@ -92,7 +93,7 @@ public class CastExpressionCompiler {
             insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;"));
             insnList.add(new TypeInsnNode(Opcodes.CHECKCAST, fullyQualifiedTypeName));
         }
-        resultType = TypeUtil.toDesc(fullyQualifiedTypeName);
+        resultType = Type.fromDescriptor(TypeUtil.toDesc(fullyQualifiedTypeName));
         return new Result(insnList, resultType, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
     }
 

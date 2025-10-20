@@ -3,6 +3,8 @@ package me.pr3.atypical.compiler.statement;
 import me.pr3.atypical.compiler.MethodCompiler;
 import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
+import me.pr3.atypical.compiler.typing.Descriptor;
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.compiler.util.TypeUtil;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -34,7 +36,7 @@ public class StatementCompiler {
             String localVarType = TypeUtil.toDesc(lvde.typeName().getText(), structureCompiler.imports.get(methodCompiler.fileName));
             Result expressionResult = compiler.compileExpression(lvde.expression());
             insnList.add(expressionResult.insnList());
-            int localVarIndex = methodCompiler.addLocalVar(localVarType, lvde.variableName().getText());
+            int localVarIndex = methodCompiler.addLocalVar(Type.fromDescriptor(localVarType), lvde.variableName().getText());
             insnList.add(new VarInsnNode(getStoreInstruction(expressionResult.returnType()), localVarIndex));
         }
         if (context.asignLocalVariableStatement() != null) {
@@ -53,13 +55,13 @@ public class StatementCompiler {
             ReturnStatementContext returnStatement = context.returnStatement();
             if (returnStatement.expression() != null) {
                 Result expressionResult = compiler.compileExpression(returnStatement.expression());
-                if(!expressionResult.returnType().equals(TypeUtil.getReturnType(methodCompiler.methodNode.desc))){
+                if(expressionResult.returnType().getKind() != Descriptor.fromString(methodCompiler.methodNode.desc).getReturnType().getKind()){
                     throw new IllegalArgumentException("Return Type Mismatch");
                 }
                 insnList.add(expressionResult.insnList());
                 insnList.add(new InsnNode(getReturnInstructionForType(expressionResult.returnType())));
             } else {
-                if(!TypeUtil.getReturnType(methodCompiler.methodNode.desc).equals("V")){
+                if(Descriptor.fromString(methodCompiler.methodNode.desc).getReturnType().getKind() != Type.Kind.VOID){
                     throw new IllegalArgumentException("Return Type Mismatch");
                 }
                 insnList.add(new InsnNode(Opcodes.RETURN));
@@ -77,17 +79,17 @@ public class StatementCompiler {
         return insnList;
     }
 
-    private int getReturnInstructionForType(String returnType) {
-        return switch (returnType) {
-            case "I", "Z" -> Opcodes.IRETURN;
-            case "V" -> Opcodes.RETURN;
+    private int getReturnInstructionForType(Type returnType) {
+        return switch (returnType.getKind()) {
+            case Type.Kind.INT, Type.Kind.BOOLEAN -> Opcodes.IRETURN;
+            case Type.Kind.VOID -> Opcodes.RETURN;
             default -> Opcodes.ARETURN;
         };
     }
 
-    private int getStoreInstruction(String varType){
-        return switch (varType){
-            case "I", "Z" -> Opcodes.ISTORE;
+    private int getStoreInstruction(Type varType){
+        return switch (varType.getKind()){
+            case Type.Kind.INT, Type.Kind.BOOLEAN -> Opcodes.ISTORE;
             default -> Opcodes.ASTORE;
         };
     }

@@ -1,12 +1,14 @@
 package me.pr3.atypical.compiler.statement;
 
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
+import me.pr3.atypical.compiler.typing.Type;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
 import static me.pr3.atypical.compiler.expression.ExpressionCompiler.Result;
+import static me.pr3.atypical.compiler.typing.Type.Kind.*;
 import static me.pr3.atypical.generated.AtypicalParser.*;
 
 /**
@@ -24,7 +26,7 @@ public class IfStatementCompiler {
         InsnList insnList = new InsnList();
         ExpressionCompiler expressionCompiler = new ExpressionCompiler(statementCompiler.structureCompiler, statementCompiler.methodCompiler);
         Result expressionResult = expressionCompiler.compileExpression(ifStatementContext.expression());
-        if(!expressionResult.returnType().equals("Z"))throw new IllegalStateException("If statement expression did not evaluate to boolean");
+        if(expressionResult.returnType().getKind() != BOOLEAN)throw new IllegalStateException("If statement expression did not evaluate to boolean");
         LabelNode endIfBlock = new LabelNode();
         LabelNode endElseBlocks = new LabelNode();
         insnList.add(expressionResult.insnList());
@@ -38,7 +40,7 @@ public class IfStatementCompiler {
         insnList.add(endIfBlock);
         for (ElseIfStatementContext elseIfStatementContext : ifStatementContext.elseIfStatement()) {
             Result elseIfResult = expressionCompiler.compileExpression(elseIfStatementContext.expression());
-            if(!elseIfResult.returnType().equals("Z"))throw new IllegalStateException("Else if statement expression did not evaluate to boolean");
+            if(elseIfResult.returnType().getKind() != BOOLEAN)throw new IllegalStateException("Else if statement expression did not evaluate to boolean");
             LabelNode endElseIfBlock = new LabelNode();
             insnList.add(elseIfResult.insnList());
             insnList.add(new JumpInsnNode(Opcodes.IFEQ, endElseIfBlock));

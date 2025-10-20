@@ -1,5 +1,6 @@
 package me.pr3.atypical.compiler.expression;
 
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.generated.AtypicalParser;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
@@ -34,41 +35,42 @@ public class CmpExpressionCompiler {
         insnList.add(trueLabel);
         insnList.add(new InsnNode(Opcodes.ICONST_1));
         insnList.add(endLabel);
-        return new ExpressionCompiler.Result(insnList, "Z", Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
+        return new ExpressionCompiler.Result(insnList, Type.BOOLEAN, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
     }
 
-    public int getCompareOpcode(AtypicalParser.ExpressionContext context, String lhsType, String rhsType) {
+    public int getCompareOpcode(AtypicalParser.ExpressionContext context, Type lhsType, Type rhsType) {
         if (context.CMPEQ() != null) {
-            switch (lhsType) {
-                case "I":
+            switch (lhsType.getKind()) {
+                case Type.Kind.INT:
                     return Opcodes.IF_ICMPEQ;
                 default:
                     return Opcodes.IF_ACMPEQ;
             }
         }
         if (context.CMPNE() != null) {
-            switch (lhsType) {
-                case "I":
+            switch (lhsType.getKind()) {
+                case Type.Kind.INT:
                     return Opcodes.IF_ICMPNE;
                 default:
                     return Opcodes.IF_ACMPNE;
             }
         }
         if (context.CMPGT() != null) {
-            switch (lhsType) {
-                case "I":
+            switch (lhsType.getKind()) {
+                case Type.Kind.INT:
                     return Opcodes.IF_ICMPGT;
                 default:
                     throw new IllegalStateException("Cannot use greater than comparison on type " + lhsType);
             }
         }
         if (context.CMPLT() != null) {
-            switch (lhsType) {
-                case "I":
+            switch (lhsType.getKind()) {
+                case Type.Kind.INT:
                     return Opcodes.IF_ICMPLT;
                 default:
                     throw new IllegalStateException("Cannot use greater than comparison on type " + lhsType);
-            }        }
+            }
+        }
         throw new IllegalStateException("Unknown comparison operator");
 
     }

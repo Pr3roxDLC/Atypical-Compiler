@@ -1,5 +1,6 @@
 package me.pr3.atypical.compiler.expression;
 
+import me.pr3.atypical.compiler.typing.Type;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -13,7 +14,7 @@ public class ArithmeticExpressionCompiler {
     }
 
     public ExpressionCompiler.Result compileArithmeticExpression(me.pr3.atypical.generated.AtypicalParser.ExpressionContext context) {
-        String returnType = "V";
+        Type returnType = Type.VOID;
         ExpressionCompiler.Result lhs = expressionCompiler.compilePostfixExpression(context.postfixExpression(), false);
         returnType = lhs.returnType();
         InsnList insnList = new InsnList();
@@ -24,17 +25,17 @@ public class ArithmeticExpressionCompiler {
 
         if(context.ADD() != null){
 
-            switch (lhs.returnType()){
-                case "I":
+            switch (lhs.returnType().getKind()){
+                case Type.Kind.INT:
                     insnList.add(new InsnNode(Opcodes.IADD));
                     break;
-                case "F":
+                case Type.Kind.FLOAT:
                     insnList.add(new InsnNode(Opcodes.FADD));
                     break;
-                case "J":
+                case Type.Kind.LONG:
                     insnList.add(new InsnNode(Opcodes.LADD));
                     break;
-                case "D":
+                case Type.Kind.BOOLEAN:
                     insnList.add(new InsnNode(Opcodes.DADD));
                     break;
                 default:
@@ -44,18 +45,17 @@ public class ArithmeticExpressionCompiler {
         }
 
         if(context.SUB() != null){
-
-            switch (lhs.returnType()){
-                case "I":
+            switch (lhs.returnType().getKind()){
+                case Type.Kind.INT:
                     insnList.add(new InsnNode(Opcodes.ISUB));
                     break;
-                case "F":
+                case Type.Kind.FLOAT:
                     insnList.add(new InsnNode(Opcodes.FSUB));
                     break;
-                case "J":
+                case Type.Kind.LONG:
                     insnList.add(new InsnNode(Opcodes.LSUB));
                     break;
-                case "D":
+                case Type.Kind.BOOLEAN:
                     insnList.add(new InsnNode(Opcodes.DSUB));
                     break;
                 default:
@@ -65,18 +65,17 @@ public class ArithmeticExpressionCompiler {
         }
 
         if(context.MUL() != null){
-
-            switch (lhs.returnType()){
-                case "I":
+            switch (lhs.returnType().getKind()){
+                case Type.Kind.INT:
                     insnList.add(new InsnNode(Opcodes.IMUL));
                     break;
-                case "F":
+                case Type.Kind.FLOAT:
                     insnList.add(new InsnNode(Opcodes.FMUL));
                     break;
-                case "J":
+                case Type.Kind.LONG:
                     insnList.add(new InsnNode(Opcodes.LMUL));
                     break;
-                case "D":
+                case Type.Kind.BOOLEAN:
                     insnList.add(new InsnNode(Opcodes.DMUL));
                     break;
                 default:
@@ -86,18 +85,17 @@ public class ArithmeticExpressionCompiler {
         }
 
         if(context.DIV() != null){
-
-            switch (lhs.returnType()){
-                case "I":
+            switch (lhs.returnType().getKind()){
+                case Type.Kind.INT:
                     insnList.add(new InsnNode(Opcodes.IDIV));
                     break;
-                case "F":
+                case Type.Kind.FLOAT:
                     insnList.add(new InsnNode(Opcodes.FDIV));
                     break;
-                case "J":
+                case Type.Kind.LONG:
                     insnList.add(new InsnNode(Opcodes.LDIV));
                     break;
-                case "D":
+                case Type.Kind.BOOLEAN:
                     insnList.add(new InsnNode(Opcodes.DDIV));
                     break;
                 default:
@@ -107,18 +105,17 @@ public class ArithmeticExpressionCompiler {
         }
 
         if(context.MOD() != null){
-
-            switch (lhs.returnType()){
-                case "I":
+            switch (lhs.returnType().getKind()){
+                case Type.Kind.INT:
                     insnList.add(new InsnNode(Opcodes.IREM));
                     break;
-                case "F":
+                case Type.Kind.FLOAT:
                     insnList.add(new InsnNode(Opcodes.FREM));
                     break;
-                case "J":
+                case Type.Kind.LONG:
                     insnList.add(new InsnNode(Opcodes.LREM));
                     break;
-                case "D":
+                case Type.Kind.BOOLEAN:
                     insnList.add(new InsnNode(Opcodes.DREM));
                     break;
                 default:
@@ -126,19 +123,22 @@ public class ArithmeticExpressionCompiler {
             }
             return new ExpressionCompiler.Result(insnList, returnType, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
         }
+
+
         if(context.LOGIC_AND() != null){
-            if(!lhs.returnType().equals("Z") || !rhs.returnType().equals("Z")){
+            if(lhs.returnType().getKind() != Type.Kind.BOOLEAN || rhs.returnType().getKind() != Type.Kind.BOOLEAN){
                 throw new IllegalStateException("Logical AND operation requires boolean types");
             }
             insnList.add(new InsnNode(Opcodes.IAND));
-            return new ExpressionCompiler.Result(insnList, "Z", Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
+            return new ExpressionCompiler.Result(insnList, Type.BOOLEAN, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
         }
+
         if(context.LOGIC_OR() != null){
-            if(!lhs.returnType().equals("Z") || !rhs.returnType().equals("Z")){
+            if(lhs.returnType().getKind() != Type.Kind.BOOLEAN || rhs.returnType().getKind() != Type.Kind.BOOLEAN){
                 throw new IllegalStateException("Logical OR operation requires boolean types");
             }
             insnList.add(new InsnNode(Opcodes.IOR));
-            return new ExpressionCompiler.Result(insnList, "Z", Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
+            return new ExpressionCompiler.Result(insnList, Type.BOOLEAN, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
         }
         return null;
     }

@@ -1,6 +1,7 @@
 package me.pr3.atypical.compiler.statement;
 
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
+import me.pr3.atypical.compiler.typing.Type;
 import me.pr3.atypical.generated.AtypicalParser;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
@@ -25,7 +26,7 @@ public class WhileStatementCompiler {
         LabelNode endOfLoop = new LabelNode();
         insnList.add(startOfLoop);
         ExpressionCompiler.Result expressionResult = expressionCompiler.compileExpression(expressionContext);
-        if (!expressionResult.returnType().equals("Z"))
+        if (expressionResult.returnType().getKind() != Type.Kind.BOOLEAN)
             throw new IllegalStateException("While statement expression did not evaluate to boolean");
         insnList.add(expressionResult.insnList());
         insnList.add(new JumpInsnNode(Opcodes.IFEQ, endOfLoop));

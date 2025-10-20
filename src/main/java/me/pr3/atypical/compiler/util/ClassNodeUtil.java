@@ -1,7 +1,8 @@
 package me.pr3.atypical.compiler.util;
 
+import me.pr3.atypical.compiler.typing.Descriptor;
+import me.pr3.atypical.compiler.typing.Type;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -21,19 +22,17 @@ public class ClassNodeUtil {
         return null;
     }
 
-    public static MethodNode getMethodNodeByNameAndParameterTypes(ClassNode classNode, String name, List<String> parameterTypes){
+    public static MethodNode getMethodNodeByNameAndParameterTypes(ClassNode classNode, String name, List<me.pr3.atypical.compiler.typing.Type> parameterTypes){
         for (MethodNode method : classNode.methods) {
             if(method.name.equals(name)){
-                Type methodDesc = Type.getMethodType(method.desc);
-                List<String> methodParamTypeList = Arrays.stream(methodDesc.getArgumentTypes())
-                        .map(Type::getDescriptor)
-                        .toList();
+                Descriptor methodDesc = Descriptor.fromString(method.desc);
+
                 boolean allMatch = true;
-                if(methodParamTypeList.size() != parameterTypes.size()){continue;}
+                if(methodDesc.getParameters().size() != parameterTypes.size()){continue;}
                 for (int i = 0; i < parameterTypes.size(); i++) {
-                    String parameterType = parameterTypes.get(i);
-                    if (!parameterType.equals(methodParamTypeList.get(i))) {
-                        if (!parameterType.equals("U")) {
+                    Type parameterType = parameterTypes.get(i);
+                    if (!parameterType.equals(methodDesc.getParameters().get(i))) {
+                        if (parameterType.getKind() != Type.Kind.UNKNOWN) {
                             allMatch = false;
                         }
                     }
