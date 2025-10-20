@@ -97,10 +97,14 @@ public class TypeUtil {
 
 
     public static String extractMethodDescriptor(MethodSignatureContext context, Map<String, String> importMapping) {
-        String parameterTypes = context.parameterDeclaration().stream()
-                .map(c -> c.typeName().getText())
-                .map(t -> toDesc(t, importMapping))
-                .collect(Collectors.joining());
+        String parameterTypes = "";
+
+        if(context.parameterList()!= null) {
+            parameterTypes = context.parameterList().parameterDeclaration().stream()
+                    .map(c -> c.typeName().getText())
+                    .map(t -> toDesc(t, importMapping))
+                    .collect(Collectors.joining());
+        }
         if(context.methodReturnTypeDeclaration() != null){
             String returnType = context.methodReturnTypeDeclaration().typeName().getText();
             String fullyQualifiedReturnType = importMapping.getOrDefault(returnType, returnType);

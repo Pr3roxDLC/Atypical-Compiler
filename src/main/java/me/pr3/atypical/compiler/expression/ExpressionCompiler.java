@@ -124,10 +124,11 @@ public class ExpressionCompiler {
                     MethodInvocationContext methodInvocationContext = memberAccessContext.methodInvocation();
                     String methodName = methodInvocationContext.memberName().getText();
                     List<String> argTypes = new ArrayList<>();
+                    InsnList argEvaluationInstructions = new InsnList();
                     if (methodInvocationContext.argList() != null) {
                         for (ExpressionContext argExpression : methodInvocationContext.argList().expression()) {
                             Result argExpressionResult = compileExpression(argExpression);
-                            insnList.add(argExpressionResult.insnList());
+                            argEvaluationInstructions.add(argExpressionResult.insnList());
                             argTypes.add(argExpressionResult.returnType);
                         }
                     }
@@ -152,11 +153,12 @@ public class ExpressionCompiler {
                             methodName,
                             argTypes);
                     if (invokedMethod != null) {
+                        insnList.add(argEvaluationInstructions);
                         insnList.add(new MethodInsnNode(opcode, owner, invokedMethod.name, invokedMethod.desc));
                         returnType = TypeUtil.getReturnType(invokedMethod.desc);
                         sourceType = SourceType.METHOD;
                     }else {
-                        Result traitImplInvocationResult = getTraitImplMethodInvocation(methodName, argTypes, owner);
+                        Result traitImplInvocationResult = getTraitImplMethodInvocation(methodName, argTypes, owner, argEvaluationInstructions);
                         insnList.add(traitImplInvocationResult.insnList());
                         returnType = traitImplInvocationResult.returnType;
                         sourceType = SourceType.METHOD;
@@ -262,7 +264,7 @@ public class ExpressionCompiler {
         return null;
     }
 
-    private Result getTraitImplMethodInvocation(String methodName, List<String> argTypes, String owner) {
+    private Result getTraitImplMethodInvocation(String methodName, List<String> argTypes, String owner, InsnList argEvaluationInstructions) {
         Set<String> implementedTraits = structureCompiler.implementedTraitsForStruct
                 .getOrDefault(owner, new HashSet<>());
         if(isTypeTrait(owner)){
@@ -283,6 +285,7 @@ public class ExpressionCompiler {
                 insnList.add(new InsnNode(Opcodes.DUP2_X1));
                 insnList.add(new InsnNode(Opcodes.POP2));
                 insnList.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, implClassName, "<init>", implClassConstructorDesc));
+                insnList.add(argEvaluationInstructions);
                 insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, implClassName, invokedTraitMethod.name, invokedTraitMethod.desc));
                 return new Result(insnList, Type.getMethodType(invokedTraitMethod.desc).getReturnType().toString(), Optional.empty(), SourceType.STATIC_STRUCT_MEMBER);
             }

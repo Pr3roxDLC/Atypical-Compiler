@@ -14,9 +14,9 @@ import java.util.Map;
  */
 public class Main {
     public static void main(String[] args) throws IOException {
-       List<String> lines = Files.readAllLines(Path.of("./example/LinkedList.atp"));
+       List<String> lines = Files.readAllLines(Path.of("./example/MathExample.atp"));
        String input = String.join("\n", lines);
-        StructureCompiler compiler = new StructureCompiler(Map.of("LinkedList.atp",input));
+        StructureCompiler compiler = new StructureCompiler(Map.of("MathExample.atp",input));
         Map<String, byte[]> result = compiler.compile();
 
         for (Map.Entry<String, byte[]> entry : result.entrySet()) {

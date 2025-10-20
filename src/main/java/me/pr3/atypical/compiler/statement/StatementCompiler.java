@@ -4,10 +4,9 @@ import me.pr3.atypical.compiler.MethodCompiler;
 import me.pr3.atypical.compiler.StructureCompiler;
 import me.pr3.atypical.compiler.expression.ExpressionCompiler;
 import me.pr3.atypical.compiler.util.TypeUtil;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
 import static me.pr3.atypical.compiler.expression.ExpressionCompiler.*;
 import static me.pr3.atypical.generated.AtypicalParser.*;
@@ -26,6 +25,9 @@ public class StatementCompiler {
 
     public InsnList compileStatement(StatementContext context) {
         InsnList insnList = new InsnList();
+        int startLineNumber = context.getStart().getLine();
+        LabelNode startLabel = new LabelNode(new Label());
+        insnList.add(startLabel);
         ExpressionCompiler compiler = new ExpressionCompiler(structureCompiler, methodCompiler);
         if (context.localVariableDeclarationExpression() != null) {
             LocalVariableDeclarationExpressionContext lvde = context.localVariableDeclarationExpression();
@@ -71,6 +73,7 @@ public class StatementCompiler {
             WhileStatementCompiler whileStatementCompiler = new WhileStatementCompiler(this);
             insnList.add(whileStatementCompiler.compileWhileStatement(context.whileStatement()));
         }
+        insnList.add(new LineNumberNode(startLineNumber, startLabel));
         return insnList;
     }
 

@@ -3,6 +3,7 @@ package me.pr3.atypical.compiler;
 import me.pr3.atypical.compiler.statement.StatementCompiler;
 import me.pr3.atypical.compiler.util.ClassNodeUtil;
 import me.pr3.atypical.compiler.util.TypeUtil;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
@@ -47,10 +48,12 @@ public class MethodCompiler {
             // instance method: slot 0 is `this`
                 addLocalVar("L" + node.name + ";", "this");
         }
-        for (ParameterDeclarationContext parameterDeclarationContext : value.methodSignature().parameterDeclaration()) {
-            String paramType = TypeUtil.toDesc(parameterDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName));
-            String paramName = parameterDeclarationContext.memberName().getText();
-            addLocalVar(paramType, paramName);
+        if(value.methodSignature().parameterList()!= null) {
+            for (ParameterDeclarationContext parameterDeclarationContext : value.methodSignature().parameterList().parameterDeclaration()) {
+                String paramType = TypeUtil.toDesc(parameterDeclarationContext.typeName().getText(), structureCompiler.imports.get(fileName));
+                String paramName = parameterDeclarationContext.memberName().getText();
+                addLocalVar(paramType, paramName);
+            }
         }
 
         methodNode.instructions.add(startLabel);

@@ -2,7 +2,8 @@ import java.lang.String as String;
 import java.lang.System as System;
 
 main(String[]: args){
-
+    LotsOfParams: foo = (LotsOfParams)Foo{null, "Bob", 10};
+    foo.m(1, 1, 1, Foo{null, "Alice", 20}, 1, 1);
 }
 
 module Foo {
@@ -12,11 +13,16 @@ module Foo {
         int: age;
     }
 
-    impl {
-        add(Foo: a) {
-            Foo: current = a;
-            current = a.child;
+}
+
+trait LotsOfParams {
+    m(int: a, int: b, int: c, Foo: d, int: e, int: f);
+}
+
+impl LotsOfParams for Foo {
+        m(int: a, int: b, int: c, Foo: d, int: e, int: f){
+            return;
         }
-    }
+
 }
 

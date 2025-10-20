@@ -31,9 +31,20 @@ implMemberDeclaration: methodImplementation;
 //Methods
 methodImplementation: methodSignature LBRACE statement* RBRACE;
 methodDeclaration: methodSignature SEMICOLON;
-methodSignature: memberName LPAREN parameterDeclaration* RPAREN methodReturnTypeDeclaration?;
+
+methodSignature
+    : memberName LPAREN parameterList? RPAREN methodReturnTypeDeclaration?
+    ;
+
+parameterList
+    : parameterDeclaration (COMMA parameterDeclaration)*
+    ;
+
+parameterDeclaration
+    : typeName COLON memberName
+    ;
+
 methodReturnTypeDeclaration: COLON typeName;
-parameterDeclaration: typeName COLON memberName;
 
 //Statements
 statement:
@@ -45,7 +56,7 @@ statement:
     | whileStatement;
 
 localVariableDeclarationExpression: typeName COLON variableName ASSIGN expression;
-asignLocalVariableStatement: variableName ASIGN expression;
+asignLocalVariableStatement: variableName ASSIGN expression;
 returnStatement: RETURN expression?;
 ifStatement: IF LPAREN expression RPAREN LBRACE statement* RBRACE elseIfStatement* elseStatement?;
 elseIfStatement: ELSE IF LPAREN expression RPAREN LBRACE statement* RBRACE;

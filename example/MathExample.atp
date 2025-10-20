@@ -3,7 +3,7 @@ import java.lang.System as Sys;
 
 trait Printable {
     print(Str: msg);
-    repeatPrint(Str: msg int: times);
+    repeatPrint(Str: msg, int: times);
 }
 module Node {
     struct {
@@ -84,7 +84,7 @@ impl Printable for Person {
         Sys.out.println(msg);
     }
 
-    repeatPrint(Str: msg int: times) {
+    repeatPrint(Str: msg, int: times) {
         int: i = 0;
         while (i < times) {
             Sys.out.println(msg);
@@ -124,9 +124,12 @@ module Util {
 main(Str[]: args) {
     Person: alice = Person { "Alice" , 30 };
     Person: bob = Person { "Bob" , 25 };
+    Person: carlos = Person {"Carlos", 30};
+    obj: carlosAsObj = (obj)carlos;
+    ((Printable)carlosAsObj).print("Hello");
 
-    ((Printable)alice).print("Welcome, ".concat(alice.name));
-    ((Printable)bob).repeatPrint("Hello, ".concat(bob.name), 3);
+    alice.print("Welcome, ".concat(alice.name));
+    bob.repeatPrint("Hello, ".concat(bob.name), 3);
 
     Util: util = Util { LinkedList { (Node)null } };
     Sys.out.println("Adding to cache...");
