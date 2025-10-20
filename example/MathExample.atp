@@ -1,0 +1,165 @@
+import java.lang.String as Str;
+import java.lang.System as Sys;
+
+trait Printable {
+    print(Str: msg);
+    repeatPrint(Str: msg int: times);
+}
+module Node {
+    struct {
+        Str: value;
+        Node: next;
+    }
+}
+
+module LinkedList {
+    struct {
+        Node: head;
+    }
+
+    impl {
+        add(Str: item) {
+            if(this.head == null){
+                this.head = Node{item, (Node)null};
+            } else {
+                Node: current = this.head;
+                while(current.next != null) {
+                    current = current.next;
+                }
+                current.next = Node{item, (Node)null};
+            }
+        }
+
+        get(int: index): Str {
+            Node: current = this.head;
+            int: pos = 0;
+            while ((current != null) && (pos < index)) {
+                current = current.next;
+                pos = pos + 1;
+            }
+            if (current == null) {
+                return "Index out of range";
+            } else {
+                return current.value;
+            }
+        }
+
+        size(): int {
+            Node: current = this.head;
+            int: count = 0;
+            while (current != null) {
+                count = count + 1;
+                current = current.next;
+            }
+            return count;
+        }
+
+        clear() {
+            this.head = null;
+        }
+    }
+}
+
+trait PrintableList {
+    printAll();
+}
+
+impl PrintableList for LinkedList {
+    printAll() {
+        Node: current = this.head;
+        while (current != null) {
+            Sys.out.println(current.value);
+            current = current.next;
+        }
+    }
+}
+module Person {
+    struct {
+        Str: name;
+        int: age;
+    }
+}
+impl Printable for Person {
+    print(Str: msg) {
+        Sys.out.println(msg);
+    }
+
+    repeatPrint(Str: msg int: times) {
+        int: i = 0;
+        while (i < times) {
+            Sys.out.println(msg);
+            i = i + 1;
+        }
+    }
+}
+
+module Util {
+    struct {
+        LinkedList: cache;
+    }
+
+    impl {
+        addToCache(Str: item) {
+            this.cache.add(item);
+        }
+
+        size(): int {
+            return this.cache.size();
+        }
+
+        getItem(int: index): Str {
+            return this.cache.get(index);
+        }
+
+        clear() {
+            this.cache.clear();
+        }
+
+        printCache() {
+            this.cache.printAll();
+        }
+    }
+}
+
+main(Str[]: args) {
+    Person: alice = Person { "Alice" , 30 };
+    Person: bob = Person { "Bob" , 25 };
+
+    ((Printable)alice).print("Welcome, ".concat(alice.name));
+    ((Printable)bob).repeatPrint("Hello, ".concat(bob.name), 3);
+
+    Util: util = Util { LinkedList { (Node)null } };
+    Sys.out.println("Adding to cache...");
+    util.addToCache(alice.name);
+    Sys.out.println("Added Alice");
+    util.addToCache(bob.name);
+    Sys.out.println("Added Bob");
+
+    int: count = util.size();
+    if (count > 1) {
+        Sys.out.println("Cache has multiple entries");
+    } else if (count == 1) {
+        Sys.out.println("Cache has one entry");
+    } else {
+        Sys.out.println("Cache is empty");
+    }
+
+    Str: first = util.getItem(0);
+    Sys.out.println("First item in cache: ".concat(first));
+
+    int: sum = 0;
+    int: i = 0;
+    while (i < 5) {
+        int: temp = sum + i;
+        sum = temp;
+        i = i + 1;
+    }
+
+    Sys.out.println("Sum of 0..4: ".concat(Str.valueOf(sum)));
+
+    Sys.out.println("Printing cache:");
+    util.printCache();
+
+    util.clear();
+    Sys.out.println("Cache cleared");
+}

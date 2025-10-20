@@ -126,6 +126,20 @@ public class ArithmeticExpressionCompiler {
             }
             return new ExpressionCompiler.Result(insnList, returnType, Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
         }
+        if(context.LOGIC_AND() != null){
+            if(!lhs.returnType().equals("Z") || !rhs.returnType().equals("Z")){
+                throw new IllegalStateException("Logical AND operation requires boolean types");
+            }
+            insnList.add(new InsnNode(Opcodes.IAND));
+            return new ExpressionCompiler.Result(insnList, "Z", Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
+        }
+        if(context.LOGIC_OR() != null){
+            if(!lhs.returnType().equals("Z") || !rhs.returnType().equals("Z")){
+                throw new IllegalStateException("Logical OR operation requires boolean types");
+            }
+            insnList.add(new InsnNode(Opcodes.IOR));
+            return new ExpressionCompiler.Result(insnList, "Z", Optional.empty(), ExpressionCompiler.SourceType.UNKNOWN);
+        }
         return null;
     }
 

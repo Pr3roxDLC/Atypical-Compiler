@@ -57,7 +57,7 @@ whileStatement: WHILE LPAREN expression RPAREN LBRACE statement* RBRACE;
 // =========================
 
 expression
-    : postfixExpression ((ADD | SUB | MUL | DIV | MOD | CMPEQ | CMPNE | CMPGT | CMPLT | ASSIGN) expression)?
+    : postfixExpression ((ADD | SUB | MUL | DIV | MOD | CMPEQ | CMPNE | CMPGT | CMPLT | ASSIGN | LOGIC_AND | LOGIC_OR) expression)?
     ;
 
 postfixExpression
@@ -99,8 +99,16 @@ parenthesesExpression: LPAREN expression RPAREN;
 castExpression: LPAREN typeName RPAREN expression;
 argList: expression (COMMA expression)*;
 
-literal: NUMBER | SINGLE_QUOTE string? SINGLE_QUOTE | DOUBLE_QUOTE string? DOUBLE_QUOTE | NULL;
-string: LETTER;
+literal
+    : NUMBER
+    | STRING
+    | NULL
+    ;
+
+  STRING
+      : SINGLE_QUOTE (~['\r\n])* SINGLE_QUOTE
+      | DOUBLE_QUOTE (~["\r\n])* DOUBLE_QUOTE
+      ;
 
 //Identifiers
 typeName: identifier (DOT identifier)* ARRAY_TYPE*;
@@ -149,6 +157,8 @@ CMPLT: '<';
 CMPGT: '>';
 CMPEQ: '==';
 CMPNE: '!=';
+LOGIC_AND: '&&';
+LOGIC_OR: '||';
 
 NOT: '!';
 INC: '++';

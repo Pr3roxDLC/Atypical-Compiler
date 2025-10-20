@@ -37,7 +37,7 @@ public class ExpressionCompiler {
             return cmpExpressionCompiler.compileCmpExpression(context);
         }
 
-        if(context.ADD() != null || context.SUB() != null || context.MUL() != null || context.DIV() != null || context.MOD() != null) {
+        if(context.ADD() != null || context.SUB() != null || context.MUL() != null || context.DIV() != null || context.MOD() != null || context.LOGIC_AND() != null || context.LOGIC_OR() != null) {
             ArithmeticExpressionCompiler arithmeticExpressionCompiler = new ArithmeticExpressionCompiler(this);
             return arithmeticExpressionCompiler.compileArithmeticExpression(context);
         }
@@ -127,7 +127,6 @@ public class ExpressionCompiler {
                     MethodInvocationContext methodInvocationContext = memberAccessContext.methodInvocation();
                     String methodName = methodInvocationContext.memberName().getText();
                     StringBuilder desc = new StringBuilder();
-                    boolean methodOwnerIsTrait = isTypeTrait(TypeUtil.extractTypeNameFromDescriptor(returnType));
                     if (methodInvocationContext.argList() != null) {
                         for (ExpressionContext argExpression : methodInvocationContext.argList().expression()) {
                             Result argExpressionResult = compileExpression(argExpression);
@@ -211,9 +210,9 @@ public class ExpressionCompiler {
                 insnList.add(new IntInsnNode(Opcodes.BIPUSH, value));
                 return new Result(insnList, "I", Optional.empty(), SourceType.LITERAL);
             }
-            if(context.literal().string() != null){
+            if(context.literal().STRING() != null){
                 InsnList insnList = new InsnList();
-                String value = context.literal().string().getText();
+                String value = context.literal().STRING().getText().replace("\"", "");
                 insnList.add(new LdcInsnNode(value));
                 return new Result(insnList, "Ljava/lang/String;", Optional.empty(), SourceType.LITERAL);
             }
