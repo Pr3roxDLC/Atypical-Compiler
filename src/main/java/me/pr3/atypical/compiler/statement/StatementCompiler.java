@@ -51,9 +51,15 @@ public class StatementCompiler {
             ReturnStatementContext returnStatement = context.returnStatement();
             if (returnStatement.expression() != null) {
                 Result expressionResult = compiler.compileExpression(returnStatement.expression());
+                if(!expressionResult.returnType().equals(TypeUtil.getReturnType(methodCompiler.methodNode.desc))){
+                    throw new IllegalArgumentException("Return Type Mismatch");
+                }
                 insnList.add(expressionResult.insnList());
                 insnList.add(new InsnNode(getReturnInstructionForType(expressionResult.returnType())));
             } else {
+                if(!TypeUtil.getReturnType(methodCompiler.methodNode.desc).equals("V")){
+                    throw new IllegalArgumentException("Return Type Mismatch");
+                }
                 insnList.add(new InsnNode(Opcodes.RETURN));
             }
         }
