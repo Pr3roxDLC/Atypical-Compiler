@@ -11,3 +11,30 @@ Atypical is a proof of concept language that brings rust-like trait and implemen
 - Assign-Operator left-hand expressions
 - instanceof/implements for traits
 - Operator functions (c++ style defining behavior for arithmatic operators)
+
+
+## Composite Types / Traits Implementation
+### Structs
+struct C = A | B;
+=>
+class C { 
+  A a;
+  B b;
+
+  boolean instanceOf(Class<?> clazz);
+  A a();
+  B b();
+}
+
+### Traits
+trait X = Y + Z;
+=>
+interface X extends Y,Z { 
+  
+}
+
+impl X for A {
+  
+}
+=>
+class X$A implements X {}
