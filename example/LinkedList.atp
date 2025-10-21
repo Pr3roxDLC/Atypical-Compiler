@@ -63,11 +63,9 @@ module Node {
     }
 }
 
-module LinkedListIter {
-    struct {
+    struct LinkedListIter {
         Node: current;
     }
-}
 
 impl Iterator for LinkedListIter{
     next(): String {

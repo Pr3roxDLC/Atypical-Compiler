@@ -29,6 +29,7 @@ public class StructureCompiler {
     public Map<String, Set<ModuleDeclarationContext>> modules = new HashMap<>();
     public Map<String, Set<TraitDeclarationContext>> traits = new HashMap<>();
     public Map<String, Set<ImplDeclarationContext>> impls = new HashMap<>();
+    public Map<String, Set<StructDeclarationContext>> structs = new HashMap<>();
     public Map<String, List<MethodImplementationContext>> globalMethods = new HashMap<>();
 
 
@@ -74,6 +75,12 @@ public class StructureCompiler {
         for (Entry<String, List<MethodImplementationContext>> globalMethodsForFile : globalMethods.entrySet()) {
             for (MethodImplementationContext methodImplementationContext : globalMethodsForFile.getValue()) {
                 generateOrAddToClassForGlobalMethod(globalMethodsForFile.getKey(), methodImplementationContext);
+            }
+        }
+
+        for (Entry<String, Set<StructDeclarationContext>> structsInFile : structs.entrySet()) {
+            for (StructDeclarationContext struct : structsInFile.getValue()) {
+                generateClassFromStruct(struct, structsInFile.getKey());
             }
         }
 
@@ -126,8 +133,30 @@ public class StructureCompiler {
             generatedClasses.put(entry.getKey(), output);
         }
 
-
         return generatedClasses;
+    }
+
+    private void generateClassFromStruct(StructDeclarationContext struct, String key) {
+        List<FieldNode> structMembers = new ArrayList<>();
+        ClassNode classNode = new ClassNode();
+        classNode.access = Opcodes.ACC_PUBLIC;
+        classNode.version = Opcodes.V17;
+        classNode.name = struct.typeName().getText();
+        classNode.methods = new ArrayList<>();
+        classNode.superName= "java/lang/Object";
+        generatedClassNodes.put(struct.typeName().getText(), classNode);
+        for (StructMemberDeclarationContext structMemberDeclarationContext : struct.structMemberDeclaration()) {
+            structMembers.add(new FieldNode(Opcodes.ACC_PUBLIC,
+                    structMemberDeclarationContext.memberName().getText(),
+                    TypeUtil.toDesc(structMemberDeclarationContext.typeName().getText(), imports.get(key)), null, null));
+        }
+        classNode.fields = structMembers;
+        //Add the synthetic constructor used by the struct initializer expression
+        classNode.methods.add(generateStructInitializerConstructor(structMembers));
+
+        StructInitializerCompiler structInitializerCompiler = new StructInitializerCompiler(this);
+        structInitializerCompiler.compileStructInitializer(struct, key, struct.typeName().getText());
+
     }
 
     private void generateOrAddToClassForGlobalMethod(String className, MethodImplementationContext method) {
@@ -269,6 +298,7 @@ public class StructureCompiler {
         this.modules.put(fileName, new HashSet<>());
         this.traits.put(fileName, new HashSet<>());
         this.impls.put(fileName, new HashSet<>());
+        this.structs.put(fileName, new HashSet<>());
         for (FileMemberContext fileMemberContext : fileContext.fileMember()) {
             if(fileMemberContext.moduleDeclaration() != null)this.modules.get(fileName).add(fileMemberContext.moduleDeclaration());
             if(fileMemberContext.traitDeclaration() != null)this.traits.get(fileName).add(fileMemberContext.traitDeclaration());
@@ -281,6 +311,9 @@ public class StructureCompiler {
                 implementedTraitsForStruct.computeIfAbsent(structTypeName, (s) -> new HashSet<>()).add(traitTypeName);
 
                 this.impls.get(fileName).add(fileMemberContext.implDeclaration());
+            }
+            if(fileMemberContext.structDeclaration() != null) {
+                structs.get(fileName).add(fileMemberContext.structDeclaration());
             }
 
             if(fileMemberContext.methodImplementation() != null) {
