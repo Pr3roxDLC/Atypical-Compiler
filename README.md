@@ -8,6 +8,7 @@ Atypical is a proof of concept language that brings rust-like trait and implemen
 - Class casting
 ## TODOS
 - instanceof/implements for traits
+- better type inference
 - Operator functions (c++ style defining behavior for arithmatic operators)
 
 
