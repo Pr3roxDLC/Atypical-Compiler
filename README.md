@@ -7,8 +7,6 @@ Atypical is a proof of concept language that brings rust-like trait and implemen
 - Method Invocations / Field Access in expressions
 - Class casting
 ## TODOS
-- Any form of basic control flow structures
-- Assign-Operator left-hand expressions
 - instanceof/implements for traits
 - Operator functions (c++ style defining behavior for arithmatic operators)
 
